@@ -1,0 +1,220 @@
+library(Kendall)
+library(zyp)
+library(lattice)
+library(ggplot2)
+library(matrixStats)
+library(leaps)
+
+Save_Data = ('E:/Thesis/Precipdata/Variable_Parameters/Values_For_Multivariate/CurrentBest')
+setwd(Save_Data)
+
+#-----Flush Value vs Independents
+flushvalue = read.csv('flush.value.data.csv', header=T)
+y = flushvalue[,2] #Dependent
+x1 = flushvalue[,4]*86400 #Intensity
+x2 = flushvalue[,5] #Max Intensity
+x3 = flushvalue[,3] #Amount
+x4 = flushvalue[,6]/86400 #Int-St Period
+x5 = flushvalue[,7] #EVPD
+x6 = flushvalue[,1] #DOY
+x7 = flushvalue[,9] #Baseline
+x8 = flushvalue[,10] #Water Temp
+x9 = flushvalue[,11] #Air temp
+x10 = flushvalue[,8]*86400 #Pre-St Slope
+
+y.1 = log10(flushvalue[,2]) #Dependent
+x1.1 = log10(flushvalue[,4]*86400) #Intensity
+x2.1 = log10(flushvalue[,5]) #Max Intensity
+x3.1 = log10(flushvalue[,3]) #Amount
+x4.1 = log10(flushvalue[,6]/86400) #Int-St Period
+x5.1 = log10(flushvalue[,7]) #EVPD
+x6.1 = log10(flushvalue[,1]) #DOY
+x7.1 = log10(flushvalue[,9]) #Baseline
+x8.1 = log10(flushvalue[,10])#Water Temp
+# Has Negatives x9.1 = log10(flushvalue[,11]) #Air temp
+# Has Negatives x10.1 = log10(flushvalue[,8]*86400) #Pre-St Slope
+
+shap.y = data.frame('p-value norm'=shapiro.test(y)$p.value)
+shap.x1 = data.frame('p-value norm'=shapiro.test(x1)$p.value)
+shap.x2 = data.frame('p-value norm'=shapiro.test(x2)$p.value)
+shap.x3 = data.frame('p-value norm'=shapiro.test(x3)$p.value)
+shap.x4 = data.frame('p-value norm'=shapiro.test(x4)$p.value)
+shap.x5 = data.frame('p-value norm'=shapiro.test(x5)$p.value)
+shap.x6 = data.frame('p-value norm'=shapiro.test(x6)$p.value)
+shap.x7 = data.frame('p-value norm'=shapiro.test(x7)$p.value)
+shap.x8 = data.frame('p-value norm'=shapiro.test(x8)$p.value)
+shap.x9 = data.frame('p-value norm'=shapiro.test(x9)$p.value)
+shap.x10 = data.frame('p-value norm'=shapiro.test(x10)$p.value)
+
+shap.y.1 = data.frame('p-value log'=shapiro.test(y.1)$p.value)
+shap.x1.1 = data.frame('p-value log'=shapiro.test(x1.1)$p.value)
+shap.x2.1 = data.frame('p-value log'=shapiro.test(x2.1)$p.value)
+shap.x3.1 = data.frame('p-value log'=shapiro.test(x3.1)$p.value)
+shap.x4.1 = data.frame('p-value log'=shapiro.test(x4.1)$p.value)
+shap.x5.1 = data.frame('p-value log'=shapiro.test(x5.1)$p.value)
+shap.x6.1 = data.frame('p-value log'=shapiro.test(x6.1)$p.value)
+shap.x7.1 = data.frame('p-value log'=shapiro.test(x7.1)$p.value)
+shap.x8.1 = data.frame('p-value log'=shapiro.test(x8.1)$p.value)
+#shap.x9.1 = data.frame('p-value log'=shapiro.test(x9.1)$p.value)
+#shap.x10.1 = data.frame('p-value log'=shapiro.test(x10.1)$p.value)
+
+Flush.Shapiro = rbind(
+'Flush' = cbind(shap.y, shap.y.1),
+'Intensity (Flush)' = cbind(shap.x1, shap.x1.1),
+'Max Intensity (Flush)' = cbind(shap.x2, shap.x2.1),
+'Amount (Flush)' = cbind(shap.x3, shap.x3.1),
+'Int-St Period (Flush)' = cbind(shap.x4, shap.x4.1),
+'EVPD (Flush)' = cbind(shap.x5, shap.x5.1),
+'DOY (Flush)' = cbind(shap.x6, shap.x6.1),
+'Baseline (Flush)' = cbind(shap.x7, shap.x7.1),
+'Water Temp (Flush)' = cbind(shap.x8, shap.x8.1),
+'Air temp (Flush)' = cbind(shap.x9, 'p.value.log'=NA),
+'Pre-St Slope (Flush)' = cbind(shap.x10, 'p.value.log'=NA)
+)
+
+#-----Dilution Value vs Independents
+dilutionvalue = read.csv('dilution.value.data.csv', header=T)
+y = abs(dilutionvalue[,2]) #Dependent
+x1 = dilutionvalue[,4]*86400 #Intensity
+x2 = dilutionvalue[,5] #Max Intensity
+x3 = dilutionvalue[,3] #Amountx4 = dilutionvalue[,6]/86400 #Int-St Period
+x5 = dilutionvalue[,7] #EVPD
+x6 = dilutionvalue[,1] #DOY
+x7 = dilutionvalue[,9] #Baseline
+x8 = dilutionvalue[,10] #Water Temp
+x9 = dilutionvalue[,11] #Air temp
+x10 = dilutionvalue[,8]*86400 #Pre-St Slope
+x11 = dilutionvalue[,12] #Flush Magnitude
+
+y.1 = log10(abs(dilutionvalue[,2])) #Dependent
+x1.1 = log10(dilutionvalue[,4]*86400) #Intensity
+x2.1 = log10(dilutionvalue[,5]) #Max Intensity
+x3.1 = log10(dilutionvalue[,3]) #Amount
+x4.1 = log10(dilutionvalue[,6]/86400) #Int-St Period
+x5.1 = log10(dilutionvalue[,7]) #EVPD
+x6.1 = log10(dilutionvalue[,1]) #DOY
+x7.1 = log10(dilutionvalue[,9]) #Baseline
+x8.1 = log10(dilutionvalue[,10])#Water Temp
+# Has Negatives x9.1 = log10(dilutionvalue[,11]) #Air temp
+# Has Negatives x10.1 = log10(dilutionvalue[,8]*86400) #Pre-St Slope
+x11.1 = log10(dilutionvalue[,12]) #Flush Magnitude
+
+shap.y = data.frame('p-value norm'=shapiro.test(y)$p.value)
+shap.x1 = data.frame('p-value norm'=shapiro.test(x1)$p.value)
+shap.x2 = data.frame('p-value norm'=shapiro.test(x2)$p.value)
+shap.x3 = data.frame('p-value norm'=shapiro.test(x3)$p.value)
+shap.x4 = data.frame('p-value norm'=shapiro.test(x4)$p.value)
+shap.x5 = data.frame('p-value norm'=shapiro.test(x5)$p.value)
+shap.x6 = data.frame('p-value norm'=shapiro.test(x6)$p.value)
+shap.x7 = data.frame('p-value norm'=shapiro.test(x7)$p.value)
+shap.x8 = data.frame('p-value norm'=shapiro.test(x8)$p.value)
+shap.x9 = data.frame('p-value norm'=shapiro.test(x9)$p.value)
+shap.x10 = data.frame('p-value norm'=shapiro.test(x10)$p.value)
+shap.x11 = data.frame('p-value norm'=shapiro.test(x11)$p.value)
+
+shap.y.1 = data.frame('p-value log'=shapiro.test(y.1)$p.value)
+shap.x1.1 = data.frame('p-value log'=shapiro.test(x1.1)$p.value)
+shap.x2.1 = data.frame('p-value log'=shapiro.test(x2.1)$p.value)
+shap.x3.1 = data.frame('p-value log'=shapiro.test(x3.1)$p.value)
+shap.x4.1 = data.frame('p-value log'=shapiro.test(x4.1)$p.value)
+shap.x5.1 = data.frame('p-value log'=shapiro.test(x5.1)$p.value)
+shap.x6.1 = data.frame('p-value log'=shapiro.test(x6.1)$p.value)
+shap.x7.1 = data.frame('p-value log'=shapiro.test(x7.1)$p.value)
+shap.x8.1 = data.frame('p-value log'=shapiro.test(x8.1)$p.value)
+#shap.x9.1 = data.frame('p-value log'=shapiro.test(x9.1)$p.value)
+#shap.x10.1 = data.frame('p-value log'=shapiro.test(x10.1)$p.value)
+shap.x11.1 = data.frame('p-value log'=shapiro.test(x11.1)$p.value)
+
+Dilution.Shapiro = rbind(
+'Dilution' = cbind(shap.y, shap.y.1),
+'Intensity (Dil)' = cbind(shap.x1, shap.x1.1),
+'Max Intensity (Dil)' = cbind(shap.x2, shap.x2.1),
+'Amount (Dil)' = cbind(shap.x3, shap.x3.1),
+'Int-St Period (Dil)' = cbind(shap.x4, shap.x4.1),
+'EVPD (Dil)' = cbind(shap.x5, shap.x5.1),
+'DOY (Dil)' = cbind(shap.x6, shap.x6.1),
+'Baseline (Dil)' = cbind(shap.x7, shap.x7.1),
+'Water Temp (Dil)' = cbind(shap.x8, shap.x8.1),
+'Air temp (Dil)' = cbind(shap.x9, 'p.value.log'=NA),
+'Pre-St Slope (Dil)' = cbind(shap.x10, 'p.value.log'=NA),
+'Flush Mag (when Dil present)' = cbind(shap.x11, shap.x11.1)
+)
+
+#-----Recovery vs Independents
+raterecovery = read.csv('rate.recovery.data.csv', header=T)
+y = raterecovery[,2]*86400 #Dependent
+x1 = raterecovery[,4]*86400 #Intensity
+x2 = raterecovery[,5] #Max Intensity
+x3 = raterecovery[,3] #Amount
+x4 = raterecovery[,6]/86400 #Int-St Period
+x5 = raterecovery[,7] #EVPD
+x6 = raterecovery[,1] #DOY
+x7 = raterecovery[,9] #Baseline
+x8 = raterecovery[,10] #Water Temp
+x9 = raterecovery[,11] #Air temp
+x10 = raterecovery[,8]*86400 #Pre-St Slope
+x11 = raterecovery[,12] #Flush Magnitude
+x12 = abs(raterecovery[,13]) #Dilution Magnitude
+
+# Has Negatives y.1 = log10(raterecovery[,2]) #Dependent
+x1.1 = log10(raterecovery[,4]*86400) #Intensity
+x2.1 = log10(raterecovery[,5]) #Max Intensity
+x3.1 = log10(raterecovery[,3]) #Amount
+x4.1 = log10(raterecovery[,6]/86400) #Int-St Period
+x5.1 = log10(raterecovery[,7]) #EVPD
+x6.1 = log10(raterecovery[,1]) #DOY
+x7.1 = log10(raterecovery[,9]) #Baseline
+x8.1 = log10(raterecovery[,10])#Water Temp
+# Has Negatives x9.1 = log10(raterecovery[,11]) #Air temp
+# Has Negatives x10.1 = log10(raterecovery[,8]*86400) #Pre-St Slope
+x11.1 = log10(raterecovery[,12]) #Flush Magnitude
+x12.1 = log10(abs(raterecovery[,13])) #Dilution Magnitude
+
+shap.y = data.frame('p-value norm'=shapiro.test(y)$p.value)
+shap.x1 = data.frame('p-value norm'=shapiro.test(x1)$p.value)
+shap.x2 = data.frame('p-value norm'=shapiro.test(x2)$p.value)
+shap.x3 = data.frame('p-value norm'=shapiro.test(x3)$p.value)
+shap.x4 = data.frame('p-value norm'=shapiro.test(x4)$p.value)
+shap.x5 = data.frame('p-value norm'=shapiro.test(x5)$p.value)
+shap.x6 = data.frame('p-value norm'=shapiro.test(x6)$p.value)
+shap.x7 = data.frame('p-value norm'=shapiro.test(x7)$p.value)
+shap.x8 = data.frame('p-value norm'=shapiro.test(x8)$p.value)
+shap.x9 = data.frame('p-value norm'=shapiro.test(x9)$p.value)
+shap.x10 = data.frame('p-value norm'=shapiro.test(x10)$p.value)
+shap.x11 = data.frame('p-value norm'=shapiro.test(x11)$p.value)
+shap.x12 = data.frame('p-value norm'=shapiro.test(x12)$p.value)
+
+shap.y.1 = data.frame('p-value log'=shapiro.test(y.1)$p.value)
+shap.x1.1 = data.frame('p-value log'=shapiro.test(x1.1)$p.value)
+shap.x2.1 = data.frame('p-value log'=shapiro.test(x2.1)$p.value)
+shap.x3.1 = data.frame('p-value log'=shapiro.test(x3.1)$p.value)
+shap.x4.1 = data.frame('p-value log'=shapiro.test(x4.1)$p.value)
+shap.x5.1 = data.frame('p-value log'=shapiro.test(x5.1)$p.value)
+shap.x6.1 = data.frame('p-value log'=shapiro.test(x6.1)$p.value)
+shap.x7.1 = data.frame('p-value log'=shapiro.test(x7.1)$p.value)
+shap.x8.1 = data.frame('p-value log'=shapiro.test(x8.1)$p.value)
+#shap.x9.1 = data.frame('p-value log'=shapiro.test(x9.1)$p.value)
+#shap.x10.1 = data.frame('p-value log'=shapiro.test(x10.1)$p.value)
+shap.x11.1 = data.frame('p-value log'=shapiro.test(x11.1)$p.value)
+shap.x12.1 = data.frame('p-value log'=shapiro.test(x12.1)$p.value)
+
+Recovery.Shapiro = rbind(
+'Recovery' = cbind(shap.y, 'p.value.log'=NA),
+'Intensity (Rec)' = cbind(shap.x1, shap.x1.1),
+'Max Intensity (Rec)' = cbind(shap.x2, shap.x2.1),
+'Amount (Rec)' = cbind(shap.x3, shap.x3.1),
+'Int-St Period (Rec)' = cbind(shap.x4, shap.x4.1),
+'EVPD (Rec)' = cbind(shap.x5, shap.x5.1),
+'DOY (Rec)' = cbind(shap.x6, shap.x6.1),
+'Baseline (Rec)' = cbind(shap.x7, shap.x7.1),
+'Water Temp (Rec)' = cbind(shap.x8, shap.x8.1),
+'Air temp (Rec)' = cbind(shap.x9, 'p.value.log'=NA),
+'Pre-St Slope (Rec)' = cbind(shap.x10, 'p.value.log'=NA),
+'Flush Mag (when Rec present)' = cbind(shap.x11, shap.x11.1),
+'Dilution Mag (when Rec present)' = cbind(shap.x12, shap.x12.1)
+)
+#-----
+all.shapiro = rbind(Flush.Shapiro, Dilution.Shapiro, Recovery.Shapiro)
+
+setwd('E:/Thesis/Precipdata/Variable_Parameters/Shapiro_Wilk')
+write.csv (all.shapiro, "Shapiro p-values.csv", row.names=T)
