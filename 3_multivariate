@@ -1,0 +1,239 @@
+library(Kendall)
+library(zyp)
+library(lattice)
+library(ggplot2)
+library(matrixStats)
+library(leaps)
+#-----
+
+Save_Data = ("F:/Thesis/Precipdata/Variable_Parameters/Values_For_Multivariate/CurrentBest")
+setwd(Save_Data)
+
+#-----LOGGED Flush Value vs Independents
+flushvalue = read.csv("flush.value.data.csv", header=T)
+y = log10(flushvalue[,2]) #Logged Dependent
+x1.2 = log10(flushvalue[,4]*60*60) #Logged Intensity
+x2.2 = log10(flushvalue[,5]) #Logged Max Intensity
+x3.2 = log10(flushvalue[,3]) #Logged Amount
+x4.2 = log10(flushvalue[,6]/86400) #Logged Int-St Period
+x5.2 = log10(flushvalue[,7]) #Logged EVPD
+x6 = flushvalue[,1] #DOY
+x7 = flushvalue[,9] #Baseline
+x9 = flushvalue[,11] #Air temp
+x10 = flushvalue[,8]*86400 #Pre-St Slope
+
+independents = data.frame(logged.intensity=x1.2,logged.max.intensity=x2.2,logged.amount=x3.2,logged.int.st.period=x4.2,Logged.EVPD=x5.2,DOY=x6,baseline=x7,air.temp=x9,pre.st.slope=x10)
+dv.complete = cor(independents, use="complete.obs")
+dv.pairwise = cor(independents, use="pairwise.complete.obs")
+pdf("Logged Flush Value Independents Correlation.pdf")
+pairs(independents, main="Logged Flush Value Independents Correlation")
+dev.off()
+write.csv(dv.complete, "dv.complete.r2.csv")
+write.csv(dv.pairwise, "dv.pairwise.csv")
+
+fit1.2 = lm(y ~ x1.2)
+	pval.1.2 = summary(fit1.2)$coefficients[2,4]
+	adjrsqu.1.2 = summary(fit1.2)$adj.r.squared
+fit2.2 = lm(y ~ x2.2)
+	pval.2.2 = summary(fit2.2)$coefficients[2,4]
+	adjrsqu.2.2 = summary(fit2.2)$adj.r.squared
+fit3.2 = lm(y ~ x3.2)
+	pval.3.2 = summary(fit3.2)$coefficients[2,4]
+	adjrsqu.3.2 = summary(fit3.2)$adj.r.squared
+fit4.2 = lm(y ~ x4.2)
+	pval.4.2= summary(fit4.2)$coefficients[2,4]
+	adjrsqu.4.2 = summary(fit4.2)$adj.r.squared
+fit5.2 = lm(y ~ x5.2)
+	pval.5.2 = summary(fit5.2)$coefficients[2,4]
+	adjrsqu.5.2 = summary(fit5.2)$adj.r.squared
+fit6 = lm(y ~ x6)
+	pval.6 = summary(fit6)$coefficients[2,4]
+	adjrsqu.6 = summary(fit6)$adj.r.squared
+fit7 = lm(y ~ x7)
+	pval.7 = summary(fit7)$coefficients[2,4]
+	adjrsqu.7 = summary(fit7)$adj.r.squared
+fit9 = lm(y ~ x9)
+	pval.9 = summary(fit9)$coefficients[2,4]
+	adjrsqu.9 = summary(fit9)$adj.r.squared
+fit10 = lm(y ~ x10)
+	pval.10 = summary(fit10)$coefficients[2,4]
+	adjrsqu.10 = summary(fit10)$adj.r.squared
+
+pval.all = rbind(pval.1.2,pval.2.2,pval.3.2,pval.4.2,pval.5.2,pval.6,pval.7,pval.9,pval.10)
+adjrsqu.all = rbind(adjrsqu.1.2,adjrsqu.2.2,adjrsqu.3.2,adjrsqu.4.2,adjrsqu.5.2,adjrsqu.6,adjrsqu.7,adjrsqu.9,adjrsqu.10)
+
+Flush.Value.Summary = data.frame(p.value=pval.all, adj.r.squared=adjrsqu.all)
+rownames(Flush.Value.Summary) = c("Logged.intensity","Logged.max.intensity","Logged.amount","Logged.int.st.period","Logged.EVPD","DOY","baseline","air.temp","pre.st.slope")
+print(Flush.Value.Summary)
+
+independents = data.frame(logged.intensity=x1.2,logged.max.intensity=x2.2,logged.amount=x3.2,logged.int.st.period=x4.2,Logged.EVPD=x5.2,DOY=x6,baseline=x7,air.temp=x9,pre.st.slope=x10)
+
+##Take complete cases to get this to work
+y2 = y[which(complete.cases(independents)==TRUE)]
+independents2 = independents[which(complete.cases(independents)==TRUE),]
+
+#Records the SINGLE BEST combination of independents for each amount of independents from just 1 to all of them
+REGSUBSETS = regsubsets(independents2, y2, nbest=1, nvmax=length(independents2[1,]))
+summary(REGSUBSETS)
+summary(REGSUBSETS)$adjr2
+summary(REGSUBSETS)$bic
+
+fit = lm(y ~ x1.2 + x2.2 + x5.2)
+summary(fit)
+
+#-----Dilution Value vs Independents
+dilutionvalue = read.csv("dilution.value.data.csv", header=T)
+y = abs(dilutionvalue[,2]) #Dependent
+x1.2 = log10(dilutionvalue[,4]*60*60) #Logged Intensity
+x2.2 = log10(dilutionvalue[,5]) #Logged Max Intensity
+x3.2 = log10(dilutionvalue[,3]) #Logged Amount
+x4.2 = log10(dilutionvalue[,6]/86400) #Logged Int-St Period
+x5.2 = log10(dilutionvalue[,7]) #Logged EVPD
+x6 = dilutionvalue[,1] #DOY
+x7 = dilutionvalue[,9] #Baseline
+x9 = dilutionvalue[,11] #Air temp
+x10 = dilutionvalue[,8]*86400 #Pre-St Slope
+x11.2 = log10(dilutionvalue[,12]) #Flush Magnitude
+
+independents = data.frame(logged.intensity=x1.2,logged.max.intensity=x2.2,logged.amount=x3.2,logged.int.st.period=x4.2,Logged.EVPD=x5.2,DOY=x6,baseline=x7,air.temp=x9,pre.st.slope=x10,Logged.flush.mag=x11.2)
+dv.complete = cor(independents, use="complete.obs")
+dv.pairwise = cor(independents, use="pairwise.complete.obs")
+pdf("Dilution Value Independents Correlation.pdf")
+pairs(independents, main="Dilution Value Independents Correlation")
+dev.off()
+write.csv(dv.complete, "dv.complete.r2.csv")
+write.csv(dv.pairwise, "dv.pairwise.csv")
+
+fit1.2 = lm(y ~ x1.2)
+	pval.1.2 = summary(fit1.2)$coefficients[2,4]
+	adjrsqu.1.2 = summary(fit1.2)$adj.r.squared
+fit2.2 = lm(y ~ x2.2)
+	pval.2.2 = summary(fit2.2)$coefficients[2,4]
+	adjrsqu.2.2 = summary(fit2.2)$adj.r.squared
+fit3.2 = lm(y ~ x3.2)
+	pval.3.2 = summary(fit3.2)$coefficients[2,4]
+	adjrsqu.3.2 = summary(fit3.2)$adj.r.squared
+fit4.2 = lm(y ~ x4.2)
+	pval.4.2= summary(fit4.2)$coefficients[2,4]
+	adjrsqu.4.2 = summary(fit4.2)$adj.r.squared
+fit5.2 = lm(y ~ x5.2)
+	pval.5.2 = summary(fit5.2)$coefficients[2,4]
+	adjrsqu.5.2 = summary(fit5.2)$adj.r.squared
+fit6 = lm(y ~ x6)
+	pval.6 = summary(fit6)$coefficients[2,4]
+	adjrsqu.6 = summary(fit6)$adj.r.squared
+fit7 = lm(y ~ x7)
+	pval.7 = summary(fit7)$coefficients[2,4]
+	adjrsqu.7 = summary(fit7)$adj.r.squared
+fit9 = lm(y ~ x9)
+	pval.9 = summary(fit9)$coefficients[2,4]
+	adjrsqu.9 = summary(fit9)$adj.r.squared
+fit10 = lm(y ~ x10)
+	pval.10 = summary(fit10)$coefficients[2,4]
+	adjrsqu.10 = summary(fit10)$adj.r.squared
+fit11.2 = lm(y ~ x11.2)
+	pval.11.2 = summary(fit11.2)$coefficients[2,4]
+	adjrsqu.11.2 = summary(fit11.2)$adj.r.squared
+
+pval.all = rbind(pval.1.2,pval.2.2,pval.3.2,pval.4.2,pval.5.2,pval.6,pval.7,pval.9,pval.10,pval.11.2)
+adjrsqu.all = rbind(adjrsqu.1.2,adjrsqu.2.2,adjrsqu.3.2,adjrsqu.4.2,adjrsqu.5.2,adjrsqu.6,adjrsqu.7,adjrsqu.9,adjrsqu.10,adjrsqu.11.2)
+
+Dilution.Value.Summary = data.frame(p.value=pval.all, adj.r.squared=adjrsqu.all)
+rownames(Dilution.Value.Summary) = c("Logged.intensity","Logged.max.intensity","Logged.amount","Logged.int.st.period","Logged.EVPD","DOY","baseline","air.temp","pre.st.slope","Logged flush mag")
+print(Dilution.Value.Summary)
+
+independents = data.frame(logged.intensity=x1.2,logged.max.intensity=x2.2,logged.amount=x3.2,logged.int.st.period=x4.2,Logged.EVPD=x5.2,DOY=x6,baseline=x7,air.temp=x9,pre.st.slope=x10,Logged.flush.mag=x11.2)
+
+##Take complete cases to get this to work
+y2 = y[which(complete.cases(independents)==TRUE)]
+independents2 = independents[which(complete.cases(independents)==TRUE),]
+
+#Records the SINGLE BEST combination of independents for each amount of independents from just 1 to all of them
+REGSUBSETS = regsubsets(independents2, y2, nbest=1, nvmax=length(independents2[1,]))
+summary(REGSUBSETS)
+summary(REGSUBSETS)$adjr2
+summary(REGSUBSETS)$bic
+
+fit = lm(y ~ x3.2 + x10)
+summary(fit)
+
+#-----Recovery vs Independents
+raterecovery = read.csv("rate.recovery.data.csv", header=T)
+y = raterecovery[,2]*86400 #Dependent
+x1.2 = log10(raterecovery[,4]*60*60) #Logged Intensity
+x2 = raterecovery[,5] #Max Intensity
+x3.2 = log10(raterecovery[,3]) #Logged Amount
+x4.2 = log10(raterecovery[,6]/86400) #Logged Int-St Period
+x5.2 = log10(raterecovery[,7]) #Logged EVPD
+x6 = raterecovery[,1] #DOY
+x7 = raterecovery[,9] #Baseline
+x9 = raterecovery[,11] #Air temp
+x10 = raterecovery[,8]*86400 #Pre-St Slope
+x11.2 = log10(raterecovery[,12]) #Flush Magnitude
+x12.2 = abs(raterecovery[,13]) #Dilution Magnitude
+
+independents = data.frame(logged.intensity=x1.2,max.intensity=x2,logged.amount=x3.2,logged.int.st.period=x4.2,Logged.EVPD=x5.2,DOY=x6,baseline=x7,air.temp=x9,pre.st.slope=x10,Logged.flush.mag=x11.2,dilution.mag=x12.2)
+rec.complete = cor(independents, use="complete.obs")
+rec.pairwise = cor(independents, use="pairwise.complete.obs")
+
+pdf("Recovery Independents Correlation.pdf")
+pairs(independents, main="Recovery Percent Independents Correlation")
+dev.off()
+write.csv(rec.complete, "rec.complete.r2.csv")
+write.csv(rec.pairwise, "rec.pairwise.csv")
+
+fit1.2 = lm(y ~ x1.2)
+	pval.1.2 = summary(fit1.2)$coefficients[2,4]
+	adjrsqu.1.2 = summary(fit1.2)$adj.r.squared
+fit2 = lm(y ~ x2)
+	pval.2 = summary(fit2)$coefficients[2,4]
+	adjrsqu.2 = summary(fit2)$adj.r.squared
+fit3.2 = lm(y ~ x3.2)
+	pval.3.2 = summary(fit3.2)$coefficients[2,4]
+	adjrsqu.3.2 = summary(fit3.2)$adj.r.squared
+fit4.2 = lm(y ~ x4.2)
+	pval.4.2= summary(fit4.2)$coefficients[2,4]
+	adjrsqu.4.2 = summary(fit4.2)$adj.r.squared
+fit5.2 = lm(y ~ x5.2)
+	pval.5.2 = summary(fit5.2)$coefficients[2,4]
+	adjrsqu.5.2 = summary(fit5.2)$adj.r.squared
+fit6 = lm(y ~ x6)
+	pval.6 = summary(fit6)$coefficients[2,4]
+	adjrsqu.6 = summary(fit6)$adj.r.squared
+fit7 = lm(y ~ x7)
+	pval.7 = summary(fit7)$coefficients[2,4]
+	adjrsqu.7 = summary(fit7)$adj.r.squared
+fit9 = lm(y ~ x9)
+	pval.9 = summary(fit9)$coefficients[2,4]
+	adjrsqu.9 = summary(fit9)$adj.r.squared
+fit10 = lm(y ~ x10)
+	pval.10 = summary(fit10)$coefficients[2,4]
+	adjrsqu.10 = summary(fit10)$adj.r.squared
+fit11.2 = lm(y ~ x11.2)
+	pval.11.2 = summary(fit11.2)$coefficients[2,4]
+	adjrsqu.11.2 = summary(fit11.2)$adj.r.squared
+fit12.2 = lm(y ~ x12.2)
+	pval.12.2 = summary(fit12.2)$coefficients[2,4]
+	adjrsqu.12.2 = summary(fit12.2)$adj.r.squared
+
+pval.all = rbind(pval.1.2,pval.2,pval.3.2,pval.4.2,pval.5.2,pval.6,pval.7,pval.9,pval.10,pval.11.2,pval.12.2)
+adjrsqu.all = rbind(adjrsqu.1.2,adjrsqu.2,adjrsqu.3.2,adjrsqu.4.2,adjrsqu.5.2,adjrsqu.6,adjrsqu.7,adjrsqu.9,adjrsqu.10,adjrsqu.11.2,adjrsqu.12.2)
+
+Recovery.Summary = data.frame(p.value=pval.all, adj.r.squared=adjrsqu.all)
+rownames(Recovery.Summary) = c("Logged.intensity","Max.intensity","Logged.amount","Logged.int.st.period","Logged.EVPD","DOY","baseline","air.temp","pre.st.slope","Logged flush mag","Logged dilution mag")
+print(Recovery.Summary)
+
+independents = data.frame(logged.intensity=x1.2,max.intensity=x2,logged.amount=x3.2,logged.int.st.period=x4.2,Logged.EVPD=x5.2,DOY=x6,baseline=x7,air.temp=x9,pre.st.slope=x10,Logged.flush.mag=x11.2,dilution.mag=x12.2)
+
+##Take complete cases to get this to work
+y2 = y[which(complete.cases(independents)==TRUE)]
+independents2 = independents[which(complete.cases(independents)==TRUE),]
+
+#Records the SINGLE BEST combination of independents for each amount of independents from just 1 to all of them
+REGSUBSETS = regsubsets(independents2, y2, nbest=1, nvmax=length(independents2[1,]))
+summary(REGSUBSETS)
+summary(REGSUBSETS)$adjr2
+summary(REGSUBSETS)$bic
+
+fit = lm(y ~ x3.2)
+summary(fit)
