@@ -1,0 +1,1673 @@
+#-----Packages
+library(Kendall)
+library(zyp)
+library(lattice)
+library(ggplot2)
+library(matrixStats)
+library(leaps)
+
+#---Direct to the folders that hold the precip data and sensor data---
+	Extraction.Save.2013 = ("F:/Thesis/Precipdata/Variable_Parameters/Run.Save/CurrentBestData/CBU2013_Current_Best")
+	Extraction.Save.2014 = ("F:/Thesis/Precipdata/Variable_Parameters/Run.Save/CurrentBestData/CBU2014_Current_Best")
+	Baseline.Save.2013 = ("F:/Thesis/Precipdata/Variable_Parameters/Run.Save/2013_smoothed")
+	Baseline.Save.2014 = ("F:/Thesis/Precipdata/Variable_Parameters/Run.Save/2014_smoothed")
+	Temperature.Saves	= ("F:/Thesis/New_Sensor_Data")	
+	Summary.Save = ("E:/Thesis_Sections/Figures/All_Kendall_Relationships")
+	Save_Data = ("F:/Thesis/Precipdata/Variable_Parameters/Values_For_Multivariate/CurrentBest")
+
+#-----Pick the percent of times that the algorithm has to dectect a dependent response for the storm
+j=.6
+#-----Pick the percent of times that the algorithm has to detect a unique storm for a day
+k=.7
+
+#-----2013 Data
+setwd(Baseline.Save.2013)
+	baseline.cond.2013 = read.csv("baseline.matrix.csv", header=T)
+setwd(Temperature.Saves)
+	water.temp.2013 = read.csv("Median_Water_Temp_2013.csv", header=T)
+	air.temp.2013 = read.csv("Median_Air_Temp_2013.csv", header=T)
+setwd(Extraction.Save.2013)
+	parameters.2013 = read.csv("parameters.csv", header=T)
+	frequency.matrix.2013 = read.csv("frequency.matrix.csv", header=T)
+	storm.number.matrix.2013 = read.csv("storm.number.matrix.csv", header=T)
+	flush.mag.matrix.2013 = read.csv("flush.mag.matrix.csv", header=T)
+	dilution.mag.matrix.2013 = read.csv("dilution.mag.matrix.csv", header=T)
+	rate.recovery.matrix.2013 = read.csv("rate.recovery.matrix.csv", header=T)
+	flush.mag.percent.matrix.2013 = read.csv("flush.mag.percent.matrix.csv", header=T)
+	dilution.mag.percent.matrix.2013 = read.csv("dilution.mag.percent.matrix.csv", header=T)
+	interstorm.period.precip.matrix.2013 = read.csv("interstorm.period.precip.matrix.csv", header=T)
+	interstorm.period.sensor.matrix.2013 = read.csv("interstorm.period.sensor.matrix.csv", header=T)
+	interstorm.dryness.matrix.2013 = read.csv("interstorm.dryness.matrix.csv", header=T)
+	amount.precip.before.flush.matrix.2013 = read.csv("amount.precip.before.flush.matrix.csv", header=T)
+	intensity.precip.before.flush.matrix.2013 = read.csv("intensity.precip.before.flush.matrix.csv", header=T)
+	max.precip.intensity.before.flush.matrix.2013 = read.csv("max.precip.intensity.before.flush.matrix.csv", header=T)
+	amount.precip.before.trough.matrix.2013 = read.csv("amount.precip.before.trough.matrix.csv", header=T)
+	intensity.precip.before.trough.matrix.2013 = read.csv("intensity.precip.before.trough.matrix.csv", header=T)
+	max.precip.intensity.before.trough.matrix.2013 = read.csv("max.precip.intensity.before.trough.matrix.csv", header=T)
+	amount.total.precip.matrix.2013 = read.csv("amount.total.precip.matrix.csv", header=T)
+	intensity.total.precip.matrix.2013 = read.csv("intensity.total.precip.matrix.csv", header=T)
+	max.precip.intensity.per.storm.matrix.2013 = read.csv("max.precip.intensity.per.storm.matrix.csv", header=T)
+	time.of.peak.matrix.2013 = read.csv("time.of.peak.matrix.csv", header=T)
+	time.of.trough.matrix.2013 = read.csv("time.of.trough.matrix.csv", header=T)
+	traj.sc.at.peak.matrix.2013 = read.csv("traj.sc.at.peak.matrix.csv", header=T)
+	traj.sc.at.trough.matrix.2013 = read.csv("traj.sc.at.trough.matrix.csv", header=T)
+	actual.sc.at.peak.matrix.2013 = read.csv("actual.sc.at.peak.matrix.csv", header=T)
+	actual.sc.at.trough.matrix.2013 = read.csv("actual.sc.at.trough.matrix.csv", header=T)
+	prestorm.slope.matrix.2013 = read.csv("prestorm.slope.matrix.csv", header=T)
+	prestorm.intercept.matrix.2013 = read.csv("prestorm.intercept.matrix.csv", header=T)
+	recovery.intercept.matrix.2013 = read.csv("recovery.intercept.matrix.csv", header=T)
+
+
+#-----2014 Data
+setwd(Baseline.Save.2014)
+	baseline.cond.2014 = read.csv("baseline.matrix.csv", header=T)
+setwd(Temperature.Saves)
+	water.temp.2014 = read.csv("Median_Water_Temp_2014.csv", header=T)
+	air.temp.2014 = read.csv("Median_Air_Temp_2014.csv", header=T)
+setwd(Extraction.Save.2014)
+	parameters.2014 = read.csv("parameters.csv", header=T)
+	frequency.matrix.2014 = read.csv("frequency.matrix.csv", header=T)
+	storm.number.matrix.2014 = read.csv("storm.number.matrix.csv", header=T)
+	flush.mag.matrix.2014 = read.csv("flush.mag.matrix.csv", header=T)
+	dilution.mag.matrix.2014 = read.csv("dilution.mag.matrix.csv", header=T)
+	rate.recovery.matrix.2014 = read.csv("rate.recovery.matrix.csv", header=T)
+	flush.mag.percent.matrix.2014 = read.csv("flush.mag.percent.matrix.csv", header=T)
+	dilution.mag.percent.matrix.2014 = read.csv("dilution.mag.percent.matrix.csv", header=T)
+	interstorm.period.precip.matrix.2014 = read.csv("interstorm.period.precip.matrix.csv", header=T)
+	interstorm.period.sensor.matrix.2014 = read.csv("interstorm.period.sensor.matrix.csv", header=T)
+	interstorm.dryness.matrix.2014 = read.csv("interstorm.dryness.matrix.csv", header=T)
+	amount.precip.before.flush.matrix.2014 = read.csv("amount.precip.before.flush.matrix.csv", header=T)
+	intensity.precip.before.flush.matrix.2014 = read.csv("intensity.precip.before.flush.matrix.csv", header=T)
+	max.precip.intensity.before.flush.matrix.2014 = read.csv("max.precip.intensity.before.flush.matrix.csv", header=T)
+	amount.precip.before.trough.matrix.2014 = read.csv("amount.precip.before.trough.matrix.csv", header=T)
+	intensity.precip.before.trough.matrix.2014 = read.csv("intensity.precip.before.trough.matrix.csv", header=T)
+	max.precip.intensity.before.trough.matrix.2014 = read.csv("max.precip.intensity.before.trough.matrix.csv", header=T)
+	amount.total.precip.matrix.2014 = read.csv("amount.total.precip.matrix.csv", header=T)
+	intensity.total.precip.matrix.2014 = read.csv("intensity.total.precip.matrix.csv", header=T)
+	max.precip.intensity.per.storm.matrix.2014 = read.csv("max.precip.intensity.per.storm.matrix.csv", header=T)
+	time.of.peak.matrix.2014 = read.csv("time.of.peak.matrix.csv", header=T)
+	time.of.trough.matrix.2014 = read.csv("time.of.trough.matrix.csv", header=T)
+	traj.sc.at.peak.matrix.2014 = read.csv("traj.sc.at.peak.matrix.csv", header=T)
+	traj.sc.at.trough.matrix.2014 = read.csv("traj.sc.at.trough.matrix.csv", header=T)
+	actual.sc.at.peak.matrix.2014 = read.csv("actual.sc.at.peak.matrix.csv", header=T)
+	actual.sc.at.trough.matrix.2014 = read.csv("actual.sc.at.trough.matrix.csv", header=T)
+	prestorm.slope.matrix.2014 = read.csv("prestorm.slope.matrix.csv", header=T)
+	prestorm.intercept.matrix.2014 = read.csv("prestorm.intercept.matrix.csv", header=T)
+	recovery.intercept.matrix.2014 = read.csv("recovery.intercept.matrix.csv", header=T)
+
+#-----FLUSH MAG VALUES
+#-----Make matrices to compare r2, pvalue, and number of storms picked with each percent of iterations chosen
+flush.kendall.tau = matrix(0, 1, 11)
+colnames(flush.kendall.tau) = c("Percent of Iterations", "Flush vs Intensity", "Flush vs Max Intensity", "Flush vs Amount", "Flush vs DOY", "Flush vs Interstorm Period", "Flush vs Interstorm Dryness", "Flush vs Pre-Storm Trajectory", "Flush vs Baseline", "Flush vs Water Temp", "Flush vs Air Temp")
+flush.kendall.tau[,1] = k*100
+flush.kendall.pvalue = matrix(0, 1, 11)
+colnames(flush.kendall.pvalue) = c("Percent of Iterations", "Flush vs Intensity", "Flush vs Max Intensity", "Flush vs Amount", "Flush vs DOY", "Flush vs Interstorm Period", "Flush vs Interstorm Dryness", "Flush vs Pre-Storm Trajectory", "Flush vs Baseline", "Flush vs Water Temp", "Flush vs Air Temp")
+flush.kendall.pvalue[,1] = k*100
+flush.numberstorms = matrix(0, 1, 11)
+colnames(flush.numberstorms) = c("Percent of Iterations", "Flush vs Intensity", "Flush vs Max Intensity", "Flush vs Amount", "Flush vs DOY", "Flush vs Interstorm Period", "Flush vs Interstorm Dryness", "Flush vs Pre-Storm Trajectory", "Flush vs Baseline", "Flush vs Water Temp", "Flush vs Air Temp")
+flush.numberstorms[,1] = k*100
+
+#-----Loop by percentages #Old header, this isn't a loop
+storm.presence.2013 = subset(frequency.matrix.2013, (frequency.matrix.2013[,5]/length(parameters.2013[,1]))>k) ## Does the day have a unique storm found k% of the time?
+storm.presence.2014 = subset(frequency.matrix.2014, (frequency.matrix.2014[,5]/length(parameters.2014[,1]))>k) ## Does the day have a unique storm found k% of the time?
+	flush.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,2]/storm.presence.2013[,5] >= j) ##Does the day pick out a flush j% of the time a storm is found
+		flush.presence.2013 = subset (flush.presence.2013, flush.presence.2013[,1]>=120 & flush.presence.2013[,1]<=305)
+	trough.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,3]/storm.presence.2013[,5] >= j) ##Does the day pick out a trough j% of the time a storm is found
+		trough.presence.2013 = subset (trough.presence.2013, trough.presence.2013[,1]>=120 & trough.presence.2013[,1]<=305)
+	recovery.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,4]/storm.presence.2013[,5] >= j) ##Does the day pick out a recovery j% of the time a storm is found
+		recovery.presence.2013 = subset (recovery.presence.2013, recovery.presence.2013[,1]>=120 & recovery.presence.2013[,1]<=305)
+#-----Subsetting a period of bad data out for 2014, August 13 to September 2, DOY 225 to 245. This removes 2 storms.
+	flush.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,2]/storm.presence.2014[,5] >= j) ##Does the day pick out a flush j% of the time a storm is found
+		flush.presence.2014 = subset (flush.presence.2014, flush.presence.2014[,1]>=120 & flush.presence.2014[,1]<=305)
+		flush.presence.2014 = subset (flush.presence.2014, flush.presence.2014[,1]<224 | flush.presence.2014[,1]>246)
+	trough.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,3]/storm.presence.2014[,5] >= j) ##Does the day pick out a trough j% of the time a storm is found
+		trough.presence.2014 = subset (trough.presence.2014, trough.presence.2014[,1]>=120 & trough.presence.2014[,1]<=305)
+		trough.presence.2014 = subset (trough.presence.2014, trough.presence.2014[,1]<224 | trough.presence.2014[,1]>246)
+	recovery.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,4]/storm.presence.2014[,5] >= j) ##Does the day pick out a recovery j% of the time a storm is found
+		recovery.presence.2014 = subset (recovery.presence.2014, recovery.presence.2014[,1]>=120 & recovery.presence.2014[,1]<=305)
+		recovery.presence.2014 = subset (recovery.presence.2014, recovery.presence.2014[,1]<224 | recovery.presence.2014[,1]>246)
+
+#-----Flush Medians 2013
+
+if(length(flush.presence.2013[,1])>1){
+flush.mag.matrix.2013.. = flush.mag.matrix.2013[(flush.presence.2013[,1]),]
+amount.precip.before.flush.matrix.2013.. = amount.precip.before.flush.matrix.2013[(flush.presence.2013[,1]),]
+intensity.precip.before.flush.matrix.2013.. = intensity.precip.before.flush.matrix.2013[(flush.presence.2013[,1]),]
+max.precip.intensity.before.flush.matrix.2013.. = max.precip.intensity.before.flush.matrix.2013[(flush.presence.2013[,1]),]
+interstorm.period.precip.matrix.2013.. = interstorm.period.precip.matrix.2013[(flush.presence.2013[,1]),]
+interstorm.dryness.matrix.2013.. = interstorm.dryness.matrix.2013[(flush.presence.2013[,1]),]
+prestorm.slope.matrix.2013.. = prestorm.slope.matrix.2013[(flush.presence.2013[,1]),]
+flush.mag.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+amount.precip.before.flush.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+intensity.precip.before.flush.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+max.precip.intensity.before.flush.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+interstorm.period.precip.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+interstorm.dryness.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+prestorm.slope.medians.2013 = matrix(0,length(flush.presence.2013[,1]),4)
+
+for(p in 1:length(flush.presence.2013[,1])){
+values.working = flush.mag.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+flush.mag.medians.2013[p,1] = flush.presence.2013[,1][p]
+flush.mag.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+flush.mag.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+flush.mag.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = amount.precip.before.flush.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+amount.precip.before.flush.medians.2013[p,1] =  flush.presence.2013[,1][p]
+amount.precip.before.flush.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+amount.precip.before.flush.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+amount.precip.before.flush.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = intensity.precip.before.flush.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+intensity.precip.before.flush.medians.2013[p,1] =  flush.presence.2013[,1][p]
+intensity.precip.before.flush.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+intensity.precip.before.flush.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+intensity.precip.before.flush.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = max.precip.intensity.before.flush.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+max.precip.intensity.before.flush.medians.2013[p,1] =  flush.presence.2013[,1][p]
+max.precip.intensity.before.flush.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+max.precip.intensity.before.flush.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+max.precip.intensity.before.flush.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.period.precip.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.period.precip.medians.2013[p,1] =  flush.presence.2013[,1][p]
+interstorm.period.precip.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+interstorm.period.precip.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.period.precip.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.dryness.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.dryness.medians.2013[p,1] =  flush.presence.2013[,1][p]
+interstorm.dryness.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+interstorm.dryness.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.dryness.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = prestorm.slope.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+prestorm.slope.medians.2013[p,1] =  flush.presence.2013[,1][p]
+prestorm.slope.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+prestorm.slope.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+prestorm.slope.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+}
+}
+
+#-----Flush Medians 2014
+
+if(length(flush.presence.2014[,1])>1){
+flush.mag.matrix.2014.. = flush.mag.matrix.2014[(flush.presence.2014[,1]),]
+amount.precip.before.flush.matrix.2014.. = amount.precip.before.flush.matrix.2014[(flush.presence.2014[,1]),]
+intensity.precip.before.flush.matrix.2014.. = intensity.precip.before.flush.matrix.2014[(flush.presence.2014[,1]),]
+max.precip.intensity.before.flush.matrix.2014.. = max.precip.intensity.before.flush.matrix.2014[(flush.presence.2014[,1]),]
+interstorm.period.precip.matrix.2014.. = interstorm.period.precip.matrix.2014[(flush.presence.2014[,1]),]
+interstorm.dryness.matrix.2014.. = interstorm.dryness.matrix.2014[(flush.presence.2014[,1]),]
+prestorm.slope.matrix.2014.. = prestorm.slope.matrix.2014[(flush.presence.2014[,1]),]
+flush.mag.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+amount.precip.before.flush.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+intensity.precip.before.flush.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+max.precip.intensity.before.flush.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+interstorm.period.precip.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+interstorm.dryness.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+prestorm.slope.medians.2014 = matrix(0,length(flush.presence.2014[,1]),4)
+
+for(p in 1:length(flush.presence.2014[,1])){
+values.working = flush.mag.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+flush.mag.medians.2014[p,1] = flush.presence.2014[,1][p]
+flush.mag.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+flush.mag.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+flush.mag.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = amount.precip.before.flush.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+amount.precip.before.flush.medians.2014[p,1] =  flush.presence.2014[,1][p]
+amount.precip.before.flush.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+amount.precip.before.flush.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+amount.precip.before.flush.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = intensity.precip.before.flush.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+intensity.precip.before.flush.medians.2014[p,1] =  flush.presence.2014[,1][p]
+intensity.precip.before.flush.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+intensity.precip.before.flush.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+intensity.precip.before.flush.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = max.precip.intensity.before.flush.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+max.precip.intensity.before.flush.medians.2014[p,1] =  flush.presence.2014[,1][p]
+max.precip.intensity.before.flush.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+max.precip.intensity.before.flush.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+max.precip.intensity.before.flush.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.period.precip.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.period.precip.medians.2014[p,1] =  flush.presence.2014[,1][p]
+interstorm.period.precip.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+interstorm.period.precip.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.period.precip.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.dryness.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.dryness.medians.2014[p,1] =  flush.presence.2014[,1][p]
+interstorm.dryness.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+interstorm.dryness.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.dryness.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = prestorm.slope.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+prestorm.slope.medians.2014[p,1] =  flush.presence.2014[,1][p]
+prestorm.slope.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+prestorm.slope.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+prestorm.slope.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+}
+}
+
+#----- Water and Air Temps
+water.temp.2013.. = matrix(0,length(flush.presence.2013[,1]),2)
+water.temp.2014.. = matrix(0,length(flush.presence.2014[,1]),2)
+air.temp.2013.. = matrix(0,length(flush.presence.2013[,1]),2)
+air.temp.2014.. = matrix(0,length(flush.presence.2014[,1]),2)
+water.temp.2013..[,1] = flush.presence.2013[,1]
+water.temp.2014..[,1] = flush.presence.2014[,1]
+air.temp.2013..[,1] = flush.presence.2013[,1]
+air.temp.2014..[,1] = flush.presence.2014[,1]
+for(p in 1:length(flush.presence.2013[,1])){
+water.temp.2013. = subset(water.temp.2013, flush.presence.2013[p,1]==water.temp.2013[,1])
+air.temp.2013. = subset(air.temp.2013, flush.presence.2013[p,1]==air.temp.2013[,1])
+water.temp.2013..[p,2] = water.temp.2013.[,2]
+air.temp.2013..[p,2] = air.temp.2013.[,2]
+}
+for(p in 1:length(flush.presence.2014[,1])){
+water.temp.2014. = subset(water.temp.2014, flush.presence.2014[p,1]==water.temp.2014[,1])
+air.temp.2014. = subset(air.temp.2014, flush.presence.2014[p,1]==air.temp.2014[,1])
+water.temp.2014..[p,2] = water.temp.2014.[,2]
+air.temp.2014..[p,2] = air.temp.2014.[,2]
+}
+
+#-----30 Day median SpEC Values
+baseline.cond.2013. = baseline.cond.2013[(flush.presence.2013[,1]),]
+baseline.cond.2014. = baseline.cond.2014[(flush.presence.2014[,1]),]
+baseline.cond.2013.. = cbind(flush.presence.2013[,1], baseline.cond.2013.[,2])
+baseline.cond.2014.. = cbind(flush.presence.2014[,1], baseline.cond.2014.[,2])
+
+#-----Combine 2013 and 2014
+flush.mag.medians = rbind(flush.mag.medians.2013, flush.mag.medians.2014)
+amount.precip.before.flush.medians = rbind(amount.precip.before.flush.medians.2013, amount.precip.before.flush.medians.2014)
+intensity.precip.before.flush.medians = rbind(intensity.precip.before.flush.medians.2013, intensity.precip.before.flush.medians.2014)
+max.precip.intensity.before.flush.medians = rbind(max.precip.intensity.before.flush.medians.2013, max.precip.intensity.before.flush.medians.2014)
+interstorm.period.precip.medians = rbind(interstorm.period.precip.medians.2013, interstorm.period.precip.medians.2014)
+interstorm.dryness.medians = rbind(interstorm.dryness.medians.2013, interstorm.dryness.medians.2014)
+prestorm.slope.medians = rbind(prestorm.slope.medians.2013, prestorm.slope.medians.2014)
+baseline.cond.both.years = rbind(baseline.cond.2013.., baseline.cond.2014..)
+water.temp.both.years = rbind(water.temp.2013.., water.temp.2014..)
+air.temp.both.years = rbind(air.temp.2013.., air.temp.2014..)
+flush.mag.stats = paste0(flush.mag.medians[,2],"(",flush.mag.medians[,3],"-",flush.mag.medians[,4],")" )
+amount.precip.before.flush.stats = paste0(amount.precip.before.flush.medians[,2],"(",amount.precip.before.flush.medians[,3],"-",amount.precip.before.flush.medians[,4],")" )
+intensity.precip.before.flush.stats = paste0(intensity.precip.before.flush.medians[,2]*1200,"(",intensity.precip.before.flush.medians[,3]*1200,"-",intensity.precip.before.flush.medians[,4]*1200,")" )
+max.precip.intensity.before.flush.stats = paste0(max.precip.intensity.before.flush.medians[,2],"(",max.precip.intensity.before.flush.medians[,3],"-",max.precip.intensity.before.flush.medians[,4],")" )
+interstorm.period.precip.stats = paste0(interstorm.period.precip.medians[,2]/60,"(",interstorm.period.precip.medians[,3]/60,"-",interstorm.period.precip.medians[,4]/60,")" )
+interstorm.dryness.stats = paste0(interstorm.dryness.medians[,2],"(",interstorm.dryness.medians[,3],"-",interstorm.dryness.medians[,4],")" )
+prestorm.slope.stats = paste0(prestorm.slope.medians[,2],"(",prestorm.slope.medians[,3],"-",prestorm.slope.medians[,4],")" )
+flush.stats = data.frame(flush.mag.medians[,1], flush.mag.stats, amount.precip.before.flush.stats, intensity.precip.before.flush.stats, max.precip.intensity.before.flush.stats,
+	interstorm.period.precip.stats, interstorm.dryness.stats, prestorm.slope.stats, baseline.cond.both.years[,2])
+setwd(Summary.Save)
+write.csv (flush.stats, file= paste("flush.stats.csv", sep=""), row.names=FALSE)
+flush.value.data = data.frame(flush.mag.medians[,1], flush.mag.medians[,2], amount.precip.before.flush.medians[,2], intensity.precip.before.flush.medians[,2], 
+max.precip.intensity.before.flush.medians[,2], interstorm.period.precip.medians[,2], interstorm.dryness.medians[,2], prestorm.slope.medians[,2], baseline.cond.both.years[,2],
+water.temp.both.years[,2], air.temp.both.years[,2])
+setwd(Save_Data)
+write.csv(flush.value.data, "flush.value.data.csv", row.names=FALSE)
+
+#-----Plot and Document Relationships
+setwd(Summary.Save)
+
+tiff("Flush_ip_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Intensity
+x = intensity.precip.before.flush.medians*60*60
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="xy",
+	xlab=expression(paste("I"[P], " before Flush (mm min"^-1*")")), ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), "Two-Sided p-value<0.001",(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,2] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,2] = round(kendall$sl[1], 3)
+flush.numberstorms[1,2] = number.storms
+} else{
+flush.kendall.tau[1,2] = "n<3"
+flush.kendall.pvalue[1,2] = "n<3"
+flush.numberstorms[1,2] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_ipmax_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Max Precip Intensity per 20 min
+x = max.precip.intensity.before.flush.medians
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="xy",
+	xlab=expression(paste("I"[PMax], " before Flush (mm 20 min"^-1*")")), ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), "Two-Sided p-value<0.001",(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,3] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,3] = round(kendall$sl[1], 3)
+flush.numberstorms[1,3] = number.storms
+} else{
+flush.kendall.tau[1,3] = "n<3"
+flush.kendall.pvalue[1,3] = "n<3"
+flush.numberstorms[1,3] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_pt_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Amt
+x = amount.precip.before.flush.medians
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="xy",
+	xlab=expression(paste("P"[T], " before Flush (mm)")), ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,4] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,4] = round(kendall$sl[1], 3)
+flush.numberstorms[1,4] = number.storms
+} else{
+flush.kendall.tau[1,4] = "n<3"
+flush.kendall.pvalue[1,4] = "n<3"
+flush.numberstorms[1,4] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_doy_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs DOY-
+x = flush.mag.medians
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,1], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,1], pch = 16, log="y",
+	xlab="DoY", ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,1], y[,3], x[,1], y[,4], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,5] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,5] = round(kendall$sl[1], 3)
+flush.numberstorms[1,5] = number.storms
+} else{
+flush.kendall.tau[1,5] = "n<3"
+flush.kendall.pvalue[1,5] = "n<3"
+flush.numberstorms[1,5] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_intstperiod_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Interstorm Period
+x = interstorm.period.precip.medians/86400
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="xy",
+	xlab="ISP (days)", ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,6] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,6] = round(kendall$sl[1], 3)
+flush.numberstorms[1,6] = number.storms
+} else{
+flush.kendall.tau[1,6] = "n<3"
+flush.kendall.pvalue[1,6] = "n<3"
+flush.numberstorms[1,6] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_evpd_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Interstorm Dryness
+x = interstorm.dryness.medians
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="xy",
+	xlab=expression(paste(Sigma,"VPD (kPa)")), ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,7] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,7] = round(kendall$sl[1], 3)
+flush.numberstorms[1,7] = number.storms
+} else{
+flush.kendall.tau[1,7] = "n<3"
+flush.kendall.pvalue[1,7] = "n<3"
+flush.numberstorms[1,7] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_pst_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Pre-Storm Trajectory
+x = prestorm.slope.medians*86400
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="y",
+	xlab=expression(paste("PST (", mu, "S cm"^-1*" day"^-1*")")), ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,8] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,8] = round(kendall$sl[1], 3)
+flush.numberstorms[1,8] = number.storms
+} else{
+flush.kendall.tau[1,8] = "n<3"
+flush.kendall.pvalue[1,8] = "n<3"
+flush.numberstorms[1,8] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Flush_ta_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Flush vs Air Temp
+x = air.temp.both.years
+y = flush.mag.medians
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="y",
+	xlab=expression(paste("T"[A]," (",degree,"C)")), ylab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Flush")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+flush.kendall.tau[1,11] = round(kendall$tau[1], 3)
+flush.kendall.pvalue[1,11] = round(kendall$sl[1], 3)
+flush.numberstorms[1,11] = number.storms
+} else{
+flush.kendall.tau[1,11] = "n<3"
+flush.kendall.pvalue[1,11] = "n<3"
+flush.numberstorms[1,11] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+#-----
+
+#-----TROUGH MAG VALUE
+#-----Make matrices to compare r2, pvalue, and number of storms picked with each percent of iterations chosen
+trough.kendall.tau = matrix(0, 1, 12)
+colnames(trough.kendall.tau) = c("Percent of Iterations", "Dilution vs Intensity", "Dilution vs Max Intensity", "Dilution vs Amount", "Dilution vs DOY", "Dilution vs Interstorm Period", "Dilution vs Interstorm Dryness", "Dilution vs Pre-Storm Trajectory", "Dilution vs Mag Flush", "Dilution vs Baseline", "Dilution vs Water Temp", "Dilution vs Air Temp")
+trough.kendall.tau[,1] = k*100
+trough.kendall.pvalue = matrix(0, 1, 12)
+colnames(trough.kendall.pvalue) = c("Percent of Iterations", "Dilution vs Intensity", "Dilution vs Max Intensity", "Dilution vs Amount", "Dilution vs DOY", "Dilution vs Interstorm Period", "Dilution vs Interstorm Dryness", "Dilution vs Pre-Storm Trajectory", "Dilution vs Mag Flush", "Dilution vs Baseline", "Dilution vs Water Temp", "Dilution vs Air Temp")
+trough.kendall.pvalue[,1] = k*100
+trough.numberstorms = matrix(0, 1, 12)
+colnames(trough.numberstorms) = c("Percent of Iterations", "Dilution vs Intensity", "Dilution vs Max Intensity", "Dilution vs Amount", "Dilution vs DOY", "Dilution vs Interstorm Period", "Dilution vs Interstorm Dryness", "Dilution vs Pre-Storm Trajectory", "Dilution vs Mag Flush", "Dilution vs Baseline", "Dilution vs Water Temp", "Dilution vs Air Temp")
+trough.numberstorms[,1] = k*100
+
+#-----Loop by percentages #Old header, this isn't a loop
+storm.presence.2013 = subset(frequency.matrix.2013, (frequency.matrix.2013[,5]/length(parameters.2013[,1]))>k) ## Does the day have a unique storm found k% of the time?
+storm.presence.2014 = subset(frequency.matrix.2014, (frequency.matrix.2014[,5]/length(parameters.2014[,1]))>k) ## Does the day have a unique storm found k% of the time?
+	flush.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,2]/storm.presence.2013[,5] >= j) ##Does the day pick out a flush j% of the time a storm is found
+		flush.presence.2013 = subset (flush.presence.2013, flush.presence.2013[,1]>=120 & flush.presence.2013[,1]<=305)
+	trough.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,3]/storm.presence.2013[,5] >= j) ##Does the day pick out a trough j% of the time a storm is found
+		trough.presence.2013 = subset (trough.presence.2013, trough.presence.2013[,1]>=120 & trough.presence.2013[,1]<=305)
+	recovery.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,4]/storm.presence.2013[,5] >= j) ##Does the day pick out a recovery j% of the time a storm is found
+		recovery.presence.2013 = subset (recovery.presence.2013, recovery.presence.2013[,1]>=120 & recovery.presence.2013[,1]<=305)
+#Subsetting a period of bad data out for 2014, August 13 to September 2, DOY 225 to 245. This removes 2 storms.
+	flush.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,2]/storm.presence.2014[,5] >= j) ##Does the day pick out a flush j% of the time a storm is found
+		flush.presence.2014 = subset (flush.presence.2014, flush.presence.2014[,1]>=120 & flush.presence.2014[,1]<=305)
+		flush.presence.2014 = subset (flush.presence.2014, flush.presence.2014[,1]<224 | flush.presence.2014[,1]>246)
+	trough.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,3]/storm.presence.2014[,5] >= j) ##Does the day pick out a trough j% of the time a storm is found
+		trough.presence.2014 = subset (trough.presence.2014, trough.presence.2014[,1]>=120 & trough.presence.2014[,1]<=305)
+		trough.presence.2014 = subset (trough.presence.2014, trough.presence.2014[,1]<224 | trough.presence.2014[,1]>246)
+	recovery.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,4]/storm.presence.2014[,5] >= j) ##Does the day pick out a recovery j% of the time a storm is found
+		recovery.presence.2014 = subset (recovery.presence.2014, recovery.presence.2014[,1]>=120 & recovery.presence.2014[,1]<=305)
+		recovery.presence.2014 = subset (recovery.presence.2014, recovery.presence.2014[,1]<224 | recovery.presence.2014[,1]>246)
+
+#------Trough Medians 2013
+if(length(trough.presence.2013[,1])>1){
+trough.mag.matrix.2013.. = dilution.mag.matrix.2013[(trough.presence.2013[,1]),]
+amount.precip.before.trough.matrix.2013.. = amount.precip.before.trough.matrix.2013[(trough.presence.2013[,1]),]
+intensity.precip.before.trough.matrix.2013.. = intensity.precip.before.trough.matrix.2013[(trough.presence.2013[,1]),]
+max.precip.intensity.before.trough.matrix.2013.. = max.precip.intensity.before.trough.matrix.2013[(trough.presence.2013[,1]),]
+interstorm.period.precip.matrix.2013.. = interstorm.period.precip.matrix.2013[(trough.presence.2013[,1]),]
+interstorm.dryness.matrix.2013.. = interstorm.dryness.matrix.2013[(trough.presence.2013[,1]),]
+prestorm.slope.matrix.2013.. = prestorm.slope.matrix.2013[(trough.presence.2013[,1]),]
+flush.mag.matrix.2013.. = flush.mag.matrix.2013[(trough.presence.2013[,1]),]
+trough.mag.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+amount.precip.before.trough.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+intensity.precip.before.trough.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+max.precip.intensity.before.trough.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+interstorm.period.precip.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+interstorm.dryness.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+prestorm.slope.medians.2013 = matrix(0,length(trough.presence.2013[,1]),4)
+flush.mag.medians.2013  = matrix(0,length(trough.presence.2013[,1]),4)
+
+for(p in 1:length(trough.presence.2013[,1])){
+values.working = trough.mag.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+trough.mag.medians.2013[p,1] = trough.presence.2013[,1][p]
+trough.mag.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+trough.mag.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+trough.mag.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = amount.precip.before.trough.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+amount.precip.before.trough.medians.2013[p,1] = trough.presence.2013[,1][p]
+amount.precip.before.trough.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+amount.precip.before.trough.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+amount.precip.before.trough.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = intensity.precip.before.trough.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+intensity.precip.before.trough.medians.2013[p,1] = trough.presence.2013[,1][p]
+intensity.precip.before.trough.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+intensity.precip.before.trough.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+intensity.precip.before.trough.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = max.precip.intensity.before.trough.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+max.precip.intensity.before.trough.medians.2013[p,1] = trough.presence.2013[,1][p]
+max.precip.intensity.before.trough.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+max.precip.intensity.before.trough.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+max.precip.intensity.before.trough.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.period.precip.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.period.precip.medians.2013[p,1] = trough.presence.2013[,1][p]
+interstorm.period.precip.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+interstorm.period.precip.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.period.precip.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.dryness.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.dryness.medians.2013[p,1] = trough.presence.2013[,1][p]
+interstorm.dryness.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+interstorm.dryness.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.dryness.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = prestorm.slope.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+prestorm.slope.medians.2013[p,1] = trough.presence.2013[,1][p]
+prestorm.slope.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+prestorm.slope.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+prestorm.slope.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = flush.mag.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+flush.mag.medians.2013[p,1] = trough.presence.2013[,1][p]
+flush.mag.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+flush.mag.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+flush.mag.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+}
+}
+
+#------Trough Medians 2014
+if(length(trough.presence.2014[,1])>1){
+trough.mag.matrix.2014.. = dilution.mag.matrix.2014[(trough.presence.2014[,1]),]
+amount.precip.before.trough.matrix.2014.. = amount.precip.before.trough.matrix.2014[(trough.presence.2014[,1]),]
+intensity.precip.before.trough.matrix.2014.. = intensity.precip.before.trough.matrix.2014[(trough.presence.2014[,1]),]
+max.precip.intensity.before.trough.matrix.2014.. = max.precip.intensity.before.trough.matrix.2014[(trough.presence.2014[,1]),]
+interstorm.period.precip.matrix.2014.. = interstorm.period.precip.matrix.2014[(trough.presence.2014[,1]),]
+interstorm.dryness.matrix.2014.. = interstorm.dryness.matrix.2014[(trough.presence.2014[,1]),]
+prestorm.slope.matrix.2014.. = prestorm.slope.matrix.2014[(trough.presence.2014[,1]),]
+flush.mag.matrix.2014.. = flush.mag.matrix.2014[(trough.presence.2014[,1]),]
+trough.mag.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+amount.precip.before.trough.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+intensity.precip.before.trough.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+max.precip.intensity.before.trough.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+interstorm.period.precip.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+interstorm.dryness.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+prestorm.slope.medians.2014 = matrix(0,length(trough.presence.2014[,1]),4)
+flush.mag.medians.2014  = matrix(0,length(trough.presence.2014[,1]),4)
+
+for(p in 1:length(trough.presence.2014[,1])){
+values.working = trough.mag.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+trough.mag.medians.2014[p,1] = trough.presence.2014[,1][p]
+trough.mag.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+trough.mag.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+trough.mag.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = amount.precip.before.trough.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+amount.precip.before.trough.medians.2014[p,1] = trough.presence.2014[,1][p]
+amount.precip.before.trough.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+amount.precip.before.trough.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+amount.precip.before.trough.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = intensity.precip.before.trough.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+intensity.precip.before.trough.medians.2014[p,1] = trough.presence.2014[,1][p]
+intensity.precip.before.trough.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+intensity.precip.before.trough.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+intensity.precip.before.trough.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = max.precip.intensity.before.trough.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+max.precip.intensity.before.trough.medians.2014[p,1] = trough.presence.2014[,1][p]
+max.precip.intensity.before.trough.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+max.precip.intensity.before.trough.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+max.precip.intensity.before.trough.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.period.precip.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.period.precip.medians.2014[p,1] = trough.presence.2014[,1][p]
+interstorm.period.precip.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+interstorm.period.precip.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.period.precip.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.dryness.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.dryness.medians.2014[p,1] = trough.presence.2014[,1][p]
+interstorm.dryness.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+interstorm.dryness.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.dryness.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = prestorm.slope.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+prestorm.slope.medians.2014[p,1] = trough.presence.2014[,1][p]
+prestorm.slope.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+prestorm.slope.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+prestorm.slope.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = flush.mag.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+flush.mag.medians.2014[p,1] = trough.presence.2014[,1][p]
+flush.mag.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+flush.mag.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+flush.mag.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+}
+}
+
+#-----Water and Air Temps
+water.temp.2013.. = matrix(0,length(trough.presence.2013[,1]),2)
+water.temp.2014.. = matrix(0,length(trough.presence.2014[,1]),2)
+air.temp.2013.. = matrix(0,length(trough.presence.2013[,1]),2)
+air.temp.2014.. = matrix(0,length(trough.presence.2014[,1]),2)
+water.temp.2013..[,1] = trough.presence.2013[,1]
+water.temp.2014..[,1] = trough.presence.2014[,1]
+air.temp.2013..[,1] = trough.presence.2013[,1]
+air.temp.2014..[,1] = trough.presence.2014[,1]
+for(p in 1:length(trough.presence.2013[,1])){
+water.temp.2013. = subset(water.temp.2013, trough.presence.2013[p,1]==water.temp.2013[,1])
+air.temp.2013. = subset(air.temp.2013, trough.presence.2013[p,1]==air.temp.2013[,1])
+water.temp.2013..[p,2] = water.temp.2013.[,2]
+air.temp.2013..[p,2] = air.temp.2013.[,2]
+}
+for(p in 1:length(trough.presence.2014[,1])){
+water.temp.2014. = subset(water.temp.2014, trough.presence.2014[p,1]==water.temp.2014[,1])
+air.temp.2014. = subset(air.temp.2014, trough.presence.2014[p,1]==air.temp.2014[,1])
+water.temp.2014..[p,2] = water.temp.2014.[,2]
+air.temp.2014..[p,2] = air.temp.2014.[,2]
+}
+
+#-----30 Day median SpEC Values
+baseline.cond.2013. = baseline.cond.2013[(trough.presence.2013[,1]),]
+baseline.cond.2014. = baseline.cond.2014[(trough.presence.2014[,1]),]
+baseline.cond.2013.. = cbind(trough.presence.2013[,1], baseline.cond.2013.[,2])
+baseline.cond.2014.. = cbind(trough.presence.2014[,1], baseline.cond.2014.[,2])
+
+#-----Combine 2013 and 2014
+trough.mag.medians = rbind(trough.mag.medians.2013, trough.mag.medians.2014)
+amount.precip.before.trough.medians = rbind(amount.precip.before.trough.medians.2013, amount.precip.before.trough.medians.2014)
+intensity.precip.before.trough.medians = rbind(intensity.precip.before.trough.medians.2013, intensity.precip.before.trough.medians.2014)
+max.precip.intensity.before.trough.medians = rbind(max.precip.intensity.before.trough.medians.2013, max.precip.intensity.before.trough.medians.2014)
+interstorm.period.precip.medians = rbind(interstorm.period.precip.medians.2013, interstorm.period.precip.medians.2014)
+interstorm.dryness.medians = rbind(interstorm.dryness.medians.2013, interstorm.dryness.medians.2014)
+prestorm.slope.medians = rbind(prestorm.slope.medians.2013, prestorm.slope.medians.2014)
+flush.mag.medians = rbind(flush.mag.medians.2013, flush.mag.medians.2014)
+baseline.cond.both.years = rbind(baseline.cond.2013.., baseline.cond.2014..)
+water.temp.both.years = rbind(water.temp.2013.., water.temp.2014..)
+air.temp.both.years = rbind(air.temp.2013.., air.temp.2014..)
+trough.mag.stats = paste0(trough.mag.medians[,2],"(",trough.mag.medians[,3],"-",trough.mag.medians[,4],")" )
+amount.precip.before.trough.stats = paste0(amount.precip.before.trough.medians[,2],"(",amount.precip.before.trough.medians[,3],"-",amount.precip.before.trough.medians[,4],")" )
+intensity.precip.before.trough.stats = paste0(intensity.precip.before.trough.medians[,2]*1200,"(",intensity.precip.before.trough.medians[,3]*1200,"-",intensity.precip.before.trough.medians[,4]*1200,")" )
+max.precip.intensity.before.trough.stats = paste0(max.precip.intensity.before.trough.medians[,2],"(",max.precip.intensity.before.trough.medians[,3],"-",max.precip.intensity.before.trough.medians[,4],")" )
+interstorm.period.precip.stats = paste0(interstorm.period.precip.medians[,2]/60,"(",interstorm.period.precip.medians[,3]/60,"-",interstorm.period.precip.medians[,4]/60,")" )
+interstorm.dryness.stats = paste0(interstorm.dryness.medians[,2],"(",interstorm.dryness.medians[,3],"-",interstorm.dryness.medians[,4],")" )
+prestorm.slope.stats = paste0(prestorm.slope.medians[,2],"(",prestorm.slope.medians[,3],"-",prestorm.slope.medians[,4],")" )
+flush.mag.stats = paste0(flush.mag.medians[,2],"(",flush.mag.medians[,3],"-",flush.mag.medians[,4],")" )
+trough.stats = data.frame(trough.mag.medians[,1], trough.mag.stats, amount.precip.before.trough.stats, intensity.precip.before.trough.stats, max.precip.intensity.before.trough.stats,
+	interstorm.period.precip.stats, interstorm.dryness.stats, prestorm.slope.stats,flush.mag.stats, baseline.cond.both.years[,2])
+setwd(Summary.Save)
+write.csv (trough.stats, file= paste("trough.stats.csv", sep=""), row.names=FALSE)
+dilution.value.data = data.frame(trough.mag.medians[,1], trough.mag.medians[,2], amount.precip.before.trough.medians[,2], intensity.precip.before.trough.medians[,2], 
+max.precip.intensity.before.trough.medians[,2], interstorm.period.precip.medians[,2], interstorm.dryness.medians[,2], prestorm.slope.medians[,2], baseline.cond.both.years[,2],
+water.temp.both.years[,2], air.temp.both.years[,2], flush.mag.medians [,2])
+setwd(Save_Data)
+write.csv(dilution.value.data, "dilution.value.data.csv", row.names=FALSE)
+
+#-----Plot and Document Relationships
+setwd(Summary.Save)
+
+tiff("Dilution_ip_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Intensity
+x = intensity.precip.before.trough.medians*60*60
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("I"[P], " before Dilution (mm min"^-1*")")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,2] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,2] = round(kendall$sl[1], 3)
+trough.numberstorms[1,2] = number.storms
+} else{
+trough.kendall.tau[1,2] = "n<3"
+trough.kendall.pvalue[1,2] = "n<3"
+trough.numberstorms[1,2] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_ipmax_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Max Precip Intensity per 20 min
+x = max.precip.intensity.before.trough.medians
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("I"[PMax], " before Dilution (mm 20 min"^-1*")")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,3] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,3] = round(kendall$sl[1], 3)
+trough.numberstorms[1,3] = number.storms
+} else{
+trough.kendall.tau[1,3] = "n<3"
+trough.kendall.pvalue[1,3] = "n<3"
+trough.numberstorms[1,3] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_pt_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Amt
+x = amount.precip.before.trough.medians
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("P"[T], " before Dilution (mm)")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), "Two-Sided p-value<0.001",(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,4] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,4] = round(kendall$sl[1], 3)
+trough.numberstorms[1,4] = number.storms
+} else{
+trough.kendall.tau[1,4] = "n<3"
+trough.kendall.pvalue[1,4] = "n<3"
+trough.numberstorms[1,4] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_doy_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs DOY
+x = trough.mag.medians
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,1], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,1], pch = 16,
+	xlab="DoY", ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,1], y[,3], x[,1], y[,4], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,5] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,5] = round(kendall$sl[1], 3)
+trough.numberstorms[1,5] = number.storms
+} else{
+trough.kendall.tau[1,5] = "n<3"
+trough.kendall.pvalue[1,5] = "n<3"
+trough.numberstorms[1,5] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_intstperiod_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Interstorm Period
+x = interstorm.period.precip.medians/86400
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab="ISP (days)", ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,6] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,6] = round(kendall$sl[1], 3)
+trough.numberstorms[1,6] = number.storms
+} else{
+trough.kendall.tau[1,6] = "n<3"
+trough.kendall.pvalue[1,6] = "n<3"
+trough.numberstorms[1,6] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_evpd_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Interstorm Dryness
+x = interstorm.dryness.medians
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste(Sigma,"VPD (kPa)")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,7] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,7] = round(kendall$sl[1], 3)
+trough.numberstorms[1,7] = number.storms
+} else{
+trough.kendall.tau[1,7] = "n<3"
+trough.kendall.pvalue[1,7] = "n<3"
+trough.numberstorms[1,7] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_PST_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Pre-Storm Trajectory
+x = prestorm.slope.medians*86400
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16,
+	xlab=expression(paste("PST (", mu, "S cm"^-1*" day"^-1*")")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,8] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,8] = round(kendall$sl[1], 3)
+trough.numberstorms[1,8] = number.storms
+} else{
+trough.kendall.tau[1,8] = "n<3"
+trough.kendall.pvalue[1,8] = "n<3"
+trough.numberstorms[1,8] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+tiff("Dilution_fsc_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Mag of Flush
+x = flush.mag.medians
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,9] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,9] = round(kendall$sl[1], 3)
+trough.numberstorms[1,9] = number.storms
+} else{
+trough.kendall.tau[1,9] = "n<3"
+trough.kendall.pvalue[1,9] = "n<3"
+trough.numberstorms[1,9] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Dilution_ta_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Trough vs Air Temp-
+x = air.temp.both.years
+y = abs(trough.mag.medians)
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16,
+	xlab=expression(paste("T"[A],"(",degree,"C)")), ylab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Dilution")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+trough.kendall.tau[1,12] = round(kendall$tau[1], 3)
+trough.kendall.pvalue[1,12] = round(kendall$sl[1], 3)
+trough.numberstorms[1,12] = number.storms
+} else{
+trough.kendall.tau[1,12] = "n<3"
+trough.kendall.pvalue[1,12] = "n<3"
+trough.numberstorms[1,12] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+#-----RATE OF RECOVERY
+#-----Make matrices to compare r2, pvalue, and number of storms picked with each percent of iterations chosen
+recovery.kendall.tau = matrix(0, 1, 13)
+colnames(recovery.kendall.tau) = c("Percent of Iterations", "Recovery vs Intensity", "Recovery vs Max Intensity", "Recovery vs Amount", "Recovery vs DOY", "Recovery vs Interstorm Period", "Recovery vs Interstorm Dryness", "Recovery vs Pre-Storm Trajectory", "Recovery vs Mag Flush", "Recovery vs Mag Dilution", "Recovery vs Baseline", "Recovery vs Water Temp", "Recovery vs Air Temp")
+recovery.kendall.tau[,1] = k*100
+recovery.kendall.pvalue = matrix(0, 1, 13)
+colnames(recovery.kendall.pvalue) = c("Percent of Iterations", "Recovery vs Intensity", "Recovery vs Max Intensity", "Recovery vs Amount", "Recovery vs DOY", "Recovery vs Interstorm Period", "Recovery vs Interstorm Dryness", "Recovery vs Pre-Storm Trajectory", "Recovery vs Mag Flush", "Recovery vs Mag Dilution", "Recovery vs Baseline", "Recovery vs Water Temp", "Recovery vs Air Temp")
+recovery.kendall.pvalue[,1] = k*100
+recovery.numberstorms = matrix(0, 1, 13)
+colnames(recovery.numberstorms) = c("Percent of Iterations", "Recovery vs Intensity", "Recovery vs Max Intensity", "Recovery vs Amount", "Recovery vs DOY", "Recovery vs Interstorm Period", "Recovery vs Interstorm Dryness", "Recovery vs Pre-Storm Trajectory", "Recovery vs Mag Flush", "Recovery vs Mag Dilution", "Recovery vs Baseline", "Recovery vs Water Temp", "Recovery vs Air Temp")
+recovery.numberstorms[,1] = k*100
+
+#-----Loop by percentages #Old header, this isn't a loop
+storm.presence.2013 = subset(frequency.matrix.2013, (frequency.matrix.2013[,5]/length(parameters.2013[,1]))>k) ## Does the day have a unique storm found k% of the time?
+storm.presence.2014 = subset(frequency.matrix.2014, (frequency.matrix.2014[,5]/length(parameters.2014[,1]))>k) ## Does the day have a unique storm found k% of the time?
+	flush.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,2]/storm.presence.2013[,5] >= j) ##Does the day pick out a flush j% of the time a storm is found
+		flush.presence.2013 = subset (flush.presence.2013, flush.presence.2013[,1]>=120 & flush.presence.2013[,1]<=305)
+	trough.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,3]/storm.presence.2013[,5] >= j) ##Does the day pick out a trough j% of the time a storm is found
+		trough.presence.2013 = subset (trough.presence.2013, trough.presence.2013[,1]>=120 & trough.presence.2013[,1]<=305)
+	recovery.presence.2013 = subset(storm.presence.2013, storm.presence.2013[,4]/storm.presence.2013[,5] >= j) ##Does the day pick out a recovery j% of the time a storm is found
+		recovery.presence.2013 = subset (recovery.presence.2013, recovery.presence.2013[,1]>=120 & recovery.presence.2013[,1]<=305)
+#Subsetting a period of bad data out for 2014, August 13 to September 2, DOY 225 to 245. This removes 2 storms.
+	flush.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,2]/storm.presence.2014[,5] >= j) ##Does the day pick out a flush j% of the time a storm is found
+		flush.presence.2014 = subset (flush.presence.2014, flush.presence.2014[,1]>=120 & flush.presence.2014[,1]<=305)
+		flush.presence.2014 = subset (flush.presence.2014, flush.presence.2014[,1]<224 | flush.presence.2014[,1]>246)
+	trough.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,3]/storm.presence.2014[,5] >= j) ##Does the day pick out a trough j% of the time a storm is found
+		trough.presence.2014 = subset (trough.presence.2014, trough.presence.2014[,1]>=120 & trough.presence.2014[,1]<=305)
+		trough.presence.2014 = subset (trough.presence.2014, trough.presence.2014[,1]<224 | trough.presence.2014[,1]>246)
+	recovery.presence.2014 = subset(storm.presence.2014, storm.presence.2014[,4]/storm.presence.2014[,5] >= j) ##Does the day pick out a recovery j% of the time a storm is found
+		recovery.presence.2014 = subset (recovery.presence.2014, recovery.presence.2014[,1]>=120 & recovery.presence.2014[,1]<=305)
+		recovery.presence.2014 = subset (recovery.presence.2014, recovery.presence.2014[,1]<224 | recovery.presence.2014[,1]>246)
+
+#-----Recovery Medians 2013
+if(length(recovery.presence.2013[,1])>1){
+rate.recovery.matrix.2013.. = rate.recovery.matrix.2013[(recovery.presence.2013[,1]),]
+amount.total.precip.matrix.2013.. = amount.total.precip.matrix.2013[(recovery.presence.2013[,1]),]
+intensity.total.precip.matrix.2013.. = intensity.total.precip.matrix.2013[(recovery.presence.2013[,1]),]
+max.precip.intensity.per.storm.matrix.2013.. = max.precip.intensity.per.storm.matrix.2013[(recovery.presence.2013[,1]),]
+interstorm.period.precip.matrix.2013.. = interstorm.period.precip.matrix.2013[(recovery.presence.2013[,1]),]
+interstorm.dryness.matrix.2013.. = interstorm.dryness.matrix.2013[(recovery.presence.2013[,1]),]
+prestorm.slope.matrix.2013.. = prestorm.slope.matrix.2013[(recovery.presence.2013[,1]),]
+flush.mag.matrix.2013.. = flush.mag.matrix.2013[(recovery.presence.2013[,1]),]
+dilution.mag.matrix.2013.. = dilution.mag.matrix.2013[(recovery.presence.2013[,1]),]
+rate.recovery.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+amount.precip.before.recovery.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+intensity.precip.before.recovery.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+max.precip.intensity.before.recovery.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+interstorm.period.precip.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+interstorm.dryness.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+prestorm.slope.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+flush.mag.medians.2013  = matrix(0,length(recovery.presence.2013[,1]),4)
+dilution.mag.medians.2013 = matrix(0,length(recovery.presence.2013[,1]),4)
+
+for(p in 1:length(recovery.presence.2013[,1])){
+values.working = rate.recovery.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+rate.recovery.medians.2013[p,1] = recovery.presence.2013[,1][p]
+rate.recovery.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+rate.recovery.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+rate.recovery.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = amount.total.precip.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+amount.precip.before.recovery.medians.2013[p,1] = recovery.presence.2013[,1][p]
+amount.precip.before.recovery.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+amount.precip.before.recovery.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+amount.precip.before.recovery.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = intensity.total.precip.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+intensity.precip.before.recovery.medians.2013[p,1] = recovery.presence.2013[,1][p]
+intensity.precip.before.recovery.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+intensity.precip.before.recovery.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+intensity.precip.before.recovery.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = max.precip.intensity.per.storm.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+max.precip.intensity.before.recovery.medians.2013[p,1] = recovery.presence.2013[,1][p]
+max.precip.intensity.before.recovery.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+max.precip.intensity.before.recovery.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+max.precip.intensity.before.recovery.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.period.precip.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.period.precip.medians.2013[p,1] = recovery.presence.2013[,1][p]
+interstorm.period.precip.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+interstorm.period.precip.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.period.precip.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.dryness.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.dryness.medians.2013[p,1] = recovery.presence.2013[,1][p]
+interstorm.dryness.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+interstorm.dryness.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.dryness.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = prestorm.slope.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+prestorm.slope.medians.2013[p,1] = recovery.presence.2013[,1][p]
+prestorm.slope.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+prestorm.slope.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+prestorm.slope.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = flush.mag.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+flush.mag.medians.2013[p,1] = recovery.presence.2013[,1][p]
+flush.mag.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+flush.mag.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+flush.mag.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = dilution.mag.matrix.2013..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+dilution.mag.medians.2013[p,1] = recovery.presence.2013[,1][p]
+dilution.mag.medians.2013[p,2] = median(values.working, na.rm=TRUE)
+dilution.mag.medians.2013[p,3] = quantile(values.working, na.rm=TRUE)[2]
+dilution.mag.medians.2013[p,4] = quantile(values.working, na.rm=TRUE)[4]
+}
+}
+
+#-----Recovery Medians 2014
+if(length(recovery.presence.2014[,1])>1){
+rate.recovery.matrix.2014.. = rate.recovery.matrix.2014[(recovery.presence.2014[,1]),]
+amount.total.precip.matrix.2014.. = amount.total.precip.matrix.2014[(recovery.presence.2014[,1]),]
+intensity.total.precip.matrix.2014.. = intensity.total.precip.matrix.2014[(recovery.presence.2014[,1]),]
+max.precip.intensity.per.storm.matrix.2014.. = max.precip.intensity.per.storm.matrix.2014[(recovery.presence.2014[,1]),]
+interstorm.period.precip.matrix.2014.. = interstorm.period.precip.matrix.2014[(recovery.presence.2014[,1]),]
+interstorm.dryness.matrix.2014.. = interstorm.dryness.matrix.2014[(recovery.presence.2014[,1]),]
+prestorm.slope.matrix.2014.. = prestorm.slope.matrix.2014[(recovery.presence.2014[,1]),]
+flush.mag.matrix.2014.. = flush.mag.matrix.2014[(recovery.presence.2014[,1]),]
+dilution.mag.matrix.2014.. = dilution.mag.matrix.2014[(recovery.presence.2014[,1]),]
+rate.recovery.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+amount.precip.before.recovery.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+intensity.precip.before.recovery.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+max.precip.intensity.before.recovery.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+interstorm.period.precip.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+interstorm.dryness.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+prestorm.slope.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+flush.mag.medians.2014  = matrix(0,length(recovery.presence.2014[,1]),4)
+dilution.mag.medians.2014 = matrix(0,length(recovery.presence.2014[,1]),4)
+
+for(p in 1:length(recovery.presence.2014[,1])){
+values.working = rate.recovery.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+rate.recovery.medians.2014[p,1] = recovery.presence.2014[,1][p]
+rate.recovery.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+rate.recovery.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+rate.recovery.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = amount.total.precip.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+amount.precip.before.recovery.medians.2014[p,1] = recovery.presence.2014[,1][p]
+amount.precip.before.recovery.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+amount.precip.before.recovery.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+amount.precip.before.recovery.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = intensity.total.precip.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+intensity.precip.before.recovery.medians.2014[p,1] = recovery.presence.2014[,1][p]
+intensity.precip.before.recovery.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+intensity.precip.before.recovery.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+intensity.precip.before.recovery.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = max.precip.intensity.per.storm.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+max.precip.intensity.before.recovery.medians.2014[p,1] = recovery.presence.2014[,1][p]
+max.precip.intensity.before.recovery.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+max.precip.intensity.before.recovery.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+max.precip.intensity.before.recovery.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.period.precip.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.period.precip.medians.2014[p,1] = recovery.presence.2014[,1][p]
+interstorm.period.precip.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+interstorm.period.precip.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.period.precip.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = interstorm.dryness.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+interstorm.dryness.medians.2014[p,1] = recovery.presence.2014[,1][p]
+interstorm.dryness.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+interstorm.dryness.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+interstorm.dryness.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = prestorm.slope.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+prestorm.slope.medians.2014[p,1] = recovery.presence.2014[,1][p]
+prestorm.slope.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+prestorm.slope.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+prestorm.slope.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = flush.mag.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+flush.mag.medians.2014[p,1] = recovery.presence.2014[,1][p]
+flush.mag.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+flush.mag.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+flush.mag.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+values.working = dilution.mag.matrix.2014..[p,]
+	values.working[which(values.working==Inf)] = 0 ##turn Inf to zeros ... Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working[which(values.working==-Inf)] = 0 ##turn -Inf to zeros ... -Inf is produced when there is no flush or trough beyond the chosen std dev, and the max precip intensity is unobtainable
+	values.working = as.numeric(values.working) ##Make the values numeric
+	values.working = subset(values.working, values.working!=0,  na.rm=TRUE) ## only keep non-zero values
+dilution.mag.medians.2014[p,1] = recovery.presence.2014[,1][p]
+dilution.mag.medians.2014[p,2] = median(values.working, na.rm=TRUE)
+dilution.mag.medians.2014[p,3] = quantile(values.working, na.rm=TRUE)[2]
+dilution.mag.medians.2014[p,4] = quantile(values.working, na.rm=TRUE)[4]
+}
+}
+
+#-----Water and Air Temps
+water.temp.2013.. = matrix(0,length(recovery.presence.2013[,1]),2)
+water.temp.2014.. = matrix(0,length(recovery.presence.2014[,1]),2)
+air.temp.2013.. = matrix(0,length(recovery.presence.2013[,1]),2)
+air.temp.2014.. = matrix(0,length(recovery.presence.2014[,1]),2)
+water.temp.2013..[,1] = recovery.presence.2013[,1]
+water.temp.2014..[,1] = recovery.presence.2014[,1]
+air.temp.2013..[,1] = recovery.presence.2013[,1]
+air.temp.2014..[,1] = recovery.presence.2014[,1]
+for(p in 1:length(recovery.presence.2013[,1])){
+water.temp.2013. = subset(water.temp.2013, recovery.presence.2013[p,1]==water.temp.2013[,1])
+air.temp.2013. = subset(air.temp.2013, recovery.presence.2013[p,1]==air.temp.2013[,1])
+water.temp.2013..[p,2] = water.temp.2013.[,2]
+air.temp.2013..[p,2] = air.temp.2013.[,2]
+}
+
+for(p in 1:length(recovery.presence.2014[,1])){
+water.temp.2014. = subset(water.temp.2014, recovery.presence.2014[p,1]==water.temp.2014[,1])
+air.temp.2014. = subset(air.temp.2014, recovery.presence.2014[p,1]==air.temp.2014[,1])
+water.temp.2014..[p,2] = water.temp.2014.[,2]
+air.temp.2014..[p,2] = air.temp.2014.[,2]
+}
+
+#-----30 Day median SpEC Values
+baseline.cond.2013. = baseline.cond.2013[(recovery.presence.2013[,1]),]
+baseline.cond.2014. = baseline.cond.2014[(recovery.presence.2014[,1]),]
+baseline.cond.2013.. = cbind(recovery.presence.2013[,1], baseline.cond.2013.[,2])
+baseline.cond.2014.. = cbind(recovery.presence.2014[,1], baseline.cond.2014.[,2])
+
+#-----Combine 2013 and 2014
+
+rate.recovery.medians = rbind(rate.recovery.medians.2013, rate.recovery.medians.2014)
+amount.precip.before.recovery.medians = rbind(amount.precip.before.recovery.medians.2013, amount.precip.before.recovery.medians.2014)
+intensity.precip.before.recovery.medians = rbind(intensity.precip.before.recovery.medians.2013, intensity.precip.before.recovery.medians.2014)
+max.precip.intensity.before.recovery.medians = rbind(max.precip.intensity.before.recovery.medians.2013, max.precip.intensity.before.recovery.medians.2014)
+interstorm.period.precip.medians = rbind(interstorm.period.precip.medians.2013, interstorm.period.precip.medians.2014)
+interstorm.dryness.medians = rbind(interstorm.dryness.medians.2013, interstorm.dryness.medians.2014)
+prestorm.slope.medians = rbind(prestorm.slope.medians.2013, prestorm.slope.medians.2014)
+flush.mag.medians = rbind(flush.mag.medians.2013, flush.mag.medians.2014)
+dilution.mag.medians = rbind(dilution.mag.medians.2013, dilution.mag.medians.2014)
+baseline.cond.both.years = rbind(baseline.cond.2013.., baseline.cond.2014..)
+water.temp.both.years = rbind(water.temp.2013.., water.temp.2014..)
+air.temp.both.years = rbind(air.temp.2013.., air.temp.2014..)
+rate.recovery.stats = paste0(rate.recovery.medians[,2],"(",rate.recovery.medians[,3],"-",rate.recovery.medians[,4],")" )
+amount.precip.before.recovery.stats = paste0(amount.precip.before.recovery.medians[,2],"(",amount.precip.before.recovery.medians[,3],"-",amount.precip.before.recovery.medians[,4],")" )
+intensity.precip.before.recovery.stats = paste0(intensity.precip.before.recovery.medians[,2]*1200,"(",intensity.precip.before.recovery.medians[,3]*1200,"-",intensity.precip.before.recovery.medians[,4]*1200,")" )
+max.precip.intensity.before.recovery.stats = paste0(max.precip.intensity.before.recovery.medians[,2],"(",max.precip.intensity.before.recovery.medians[,3],"-",max.precip.intensity.before.recovery.medians[,4],")" )
+interstorm.period.precip.stats = paste0(interstorm.period.precip.medians[,2]/60,"(",interstorm.period.precip.medians[,3]/60,"-",interstorm.period.precip.medians[,4]/60,")" )
+interstorm.dryness.stats = paste0(interstorm.dryness.medians[,2],"(",interstorm.dryness.medians[,3],"-",interstorm.dryness.medians[,4],")" )
+prestorm.slope.stats = paste0(prestorm.slope.medians[,2],"(",prestorm.slope.medians[,3],"-",prestorm.slope.medians[,4],")" )
+flush.mag.stats = paste0(flush.mag.medians[,2],"(",flush.mag.medians[,3],"-",flush.mag.medians[,4],")" )
+dilution.mag.stats = paste0(dilution.mag.medians[,2],"(",dilution.mag.medians[,3],"-",dilution.mag.medians[,4],")" )
+recovery.stats = data.frame(rate.recovery.medians[,1], rate.recovery.stats, amount.precip.before.recovery.stats, intensity.precip.before.recovery.stats, max.precip.intensity.before.recovery.stats,
+	interstorm.period.precip.stats, interstorm.dryness.stats, prestorm.slope.stats, flush.mag.stats, dilution.mag.stats, baseline.cond.both.years[,2])
+setwd(Summary.Save)
+write.csv (recovery.stats, file= paste("recovery.stats.csv", sep=""), row.names=FALSE)
+rate.recovery.data = data.frame(rate.recovery.medians[,1], rate.recovery.medians[,2], amount.precip.before.recovery.medians[,2], intensity.precip.before.recovery.medians[,2], 
+max.precip.intensity.before.recovery.medians[,2], interstorm.period.precip.medians[,2], interstorm.dryness.medians[,2], prestorm.slope.medians[,2], baseline.cond.both.years[,2],
+water.temp.both.years[,2], air.temp.both.years[,2], flush.mag.medians [,2], dilution.mag.medians[,2])
+setwd(Save_Data)
+write.csv(rate.recovery.data, "rate.recovery.data.csv", row.names=FALSE)
+
+#-----Plot and Document Relationships
+setwd(Summary.Save)
+
+tiff("Recovery_ip_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Intensity
+x = intensity.precip.before.recovery.medians*60*60
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("I"[P], " for Event (mm min"^-1*")")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,2] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,2] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,2] = number.storms
+} else{
+recovery.kendall.tau[1,2] = "n<3"
+recovery.kendall.pvalue[1,2] = "n<3"
+recovery.numberstorms[1,2] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_ipmax_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Max Precip Intensity per 20 min
+x = max.precip.intensity.before.recovery.medians
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16,
+	xlab=expression(paste("I"[PMax], " for Event (mm 20 min"^-1*")")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,3] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,3] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,3] = number.storms
+} else{
+recovery.kendall.tau[1,3] = "n<3"
+recovery.kendall.pvalue[1,3] = "n<3"
+recovery.numberstorms[1,3] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_pt_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Amt
+x = amount.precip.before.recovery.medians
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("P"[T], " for Event (mm)")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), "Two-Sided p-value<0.001",(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,4] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,4] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,4] = number.storms
+} else{
+recovery.kendall.tau[1,4] = "n<3"
+recovery.kendall.pvalue[1,4] = "n<3"
+recovery.numberstorms[1,4] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_doy_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs DOY
+x = rate.recovery.medians
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,1], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,1], pch = 16,
+	xlab="DoY", ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,1], y[,3], x[,1], y[,4], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,5] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,5] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,5] = number.storms
+} else{
+recovery.kendall.tau[1,5] = "n<3"
+recovery.kendall.pvalue[1,5] = "n<3"
+recovery.numberstorms[1,5] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_instperiod_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Interstorm Period
+x = interstorm.period.precip.medians/86400
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab="ISP (days)", ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomright", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,6] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,6] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,6] = number.storms
+} else{
+recovery.kendall.tau[1,6] = "n<3"
+recovery.kendall.pvalue[1,6] = "n<3"
+recovery.numberstorms[1,6] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_evpd_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Interstorm Dryness
+x = interstorm.dryness.medians
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste(Sigma,"VPD (kPa)")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,7] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,7] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,7] = number.storms
+} else{
+recovery.kendall.tau[1,7] = "n<3"
+recovery.kendall.pvalue[1,7] = "n<3"
+recovery.numberstorms[1,7] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_PST_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Pre-Storm Trajectory
+x = prestorm.slope.medians*86400
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16,
+	xlab=expression(paste("PST (", mu, "S cm"^-1*" day"^-1*")")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,8] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,8] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,8] = number.storms
+} else{
+recovery.kendall.tau[1,8] = "n<3"
+recovery.kendall.pvalue[1,8] = "n<3"
+recovery.numberstorms[1,8] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_fsc_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Mag of Flush
+x = flush.mag.medians
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("F"[SC], " (", mu, "S cm"^-1*")")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery")
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("bottomleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,9] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,9] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,9] = number.storms
+} else{
+recovery.kendall.tau[1,9] = "n<3"
+recovery.kendall.pvalue[1,9] = "n<3"
+recovery.numberstorms[1,9] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_dsc_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Mag of Dilution
+x = abs(dilution.mag.medians)
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16, log="x",
+	xlab=expression(paste("D"[SC], " (", mu, "S cm"^-1*")")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+arrows(x[,3], y[,2], x[,4], y[,2], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), "Two-Sided p-value<0.001",(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,10] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,10] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,10] = number.storms
+} else{
+recovery.kendall.tau[1,10] = "n<3"
+recovery.kendall.pvalue[1,10] = "n<3"
+recovery.numberstorms[1,10] = "n<3"
+}
+setwd(Summary.Save)
+dev.off()
+
+tiff("Recovery_ta_hi_res.tif", height=5.8, width=5.8, units="in", res=300)
+#-----Recovery vs Air Temp
+x = air.temp.both.years
+y = rate.recovery.medians*86400
+number.storms = length(subset(x[,2], !is.na(x[,2]), na.rm=TRUE))
+if (number.storms>3){
+kendall = Kendall(x[,2], y[,2])
+par(mar=c(5,5,3,4)+.1)
+plot(y[,2]~x[,2], pch = 16,
+	xlab=expression(paste("T"[A],"(",degree,"C)")), ylab=expression(paste("R"[SC], " (", mu, "S cm"^-1*" day"^-1*")")),
+	main="2013 and 2014 Storms with a Detectable Recovery") 
+arrows(x[,2], y[,3], x[,2], y[,4], length=0.05, angle=90, code=3, col="gray")
+##Labels
+legend("topleft", sapply(c(bquote("Kendall "~tau==.(round(kendall$tau[1], 3))), (paste("Two-Sided p-value=",  round(kendall$sl[1], 3),  sep="")),(paste("Number of Storms=", number.storms,  sep=""))), as.expression), bty='n')
+##Populate stats matrices
+recovery.kendall.tau[1,13] = round(kendall$tau[1], 3)
+recovery.kendall.pvalue[1,13] = round(kendall$sl[1], 3)
+recovery.numberstorms[1,13] = number.storms
+} else{
+recovery.kendall.tau[1,13] = "n<3"
+recovery.kendall.pvalue[1,13] = "n<3"
+recovery.numberstorms[1,13] ="n<3"
+}
+setwd(Summary.Save)
+dev.off()
+#-----
