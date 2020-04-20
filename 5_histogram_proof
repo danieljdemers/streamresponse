@@ -1,0 +1,147 @@
+#----- This script plots histograms of the times of peak flush and maximum dilution along with a time series showing the median values it will loop through every precipitation event found in a chosen year and save them as figures 
+site1 = "CBU"
+year = 2013
+	Precipfolder = ("E:/Thesis/Precipdata")
+	Sensorfolder = ("E:/Thesis/New_Sensor_Data")
+	Extraction.Save.2013 = ("E:/Thesis/Precipdata/Variable_Parameters/Run.Save/CurrentBestData/CBU2013_Current_Best")
+	Baseline.Save.2013 = ("E:/Thesis/Precipdata/Variable_Parameters/Run.Save/2013_smoothed")
+	Summary.Save = ("E:/Thesis/Precipdata/Variable_Parameters/Run.Save/CurrentBestData/Graphing_Values")
+	Graphing.Values.Save = ("E:/Thesis/Precipdata/Variable_Parameters/Run.Save/CurrentBestData/Graphing_Values")
+
+setwd(Extraction.Save.2013)
+	rate.recovery.matrix.2013 = read.csv("rate.recovery.matrix.csv", header=T)
+	prestorm.slope.matrix.2013 = read.csv("prestorm.slope.matrix.csv", header=T)
+	prestorm.intercept.matrix.2013 = read.csv("prestorm.intercept.matrix.csv", header=T)
+	recovery.intercept.matrix.2013 = read.csv("recovery.intercept.matrix.csv", header=T)
+	time.of.peak.matrix.2013 = read.csv("time.of.peak.matrix.csv", header=T)
+	time.of.trough.matrix.2013 = read.csv("time.of.trough.matrix.csv", header=T)
+	frequency.matrix= read.csv("frequency.matrix.csv", header=T)
+
+setwd(Graphing.Values.Save)
+time.of.peak.medians.2013 = read.csv("time.of.peak.medians.2013.csv", header=T)
+actual.sc.at.peak.medians.2013  = read.csv("actual.sc.at.peak.medians.2013.csv", header=T)
+time.of.trough.medians.2013  = read.csv("time.of.trough.medians.2013.csv", header=T)
+actual.sc.at.trough.medians.2013  = read.csv("actual.sc.at.trough.medians.2013.csv", header=T)
+prestorm.slope.medians.2013  = read.csv("prestorm.slope.medians.2013.csv", header=T)
+prestorm.intercept.medians.2013  = read.csv("prestorm.intercept.medians.2013.csv", header=T)
+rate.recovery.medians.2013  = read.csv("rate.recovery.medians.2013.csv", header=T)
+recovery.intercept.medians.2013  = read.csv("recovery.intercept.medians.2013.csv", header=T)
+
+#-----
+days.with.storm = subset(frequency.matrix, frequency.matrix[,2]!=0 | frequency.matrix[,3]!=0 | frequency.matrix[,4] !=0 | frequency.matrix[,5] !=0 )
+setwd("C:/Users/Dan_Laptop/Desktop/Thesis_Sections/Figures/All_histogram_timeseries")
+#pdf("2013_Histograms_and_Timeseries.pdf",width=5.8,height=8)
+for (j in 1:length(days.with.storm[,1])){
+#What DOY is the storm on?
+stormdoy = days.with.storm[j,1]
+stormdate = strptime(paste(stormdoy, year), format="%j %Y")
+freq.data = subset(days.with.storm, days.with.storm[,1]==stormdoy)
+setwd("C:/Users/Dan_Laptop/Desktop/Thesis_Sections/Figures/All_histogram_timeseries")
+tiff(paste0("DOY",stormdoy,"_2013_hi_res.tif"),width=5.8,height=6, units="in", res=300)
+#Set up Histograms
+flush.time1 = as.numeric(as.character(time.of.peak.matrix.2013[stormdoy,]))
+flush.time2 = subset(flush.time1, is.na(flush.time1)==F & flush.time1>0)
+dil.time1 = as.numeric(as.character(time.of.trough.matrix.2013[stormdoy,]))
+dil.time2 = subset(dil.time1 , is.na(dil.time1 )==F & dil.time1 >0)
+#begin window 24 hours before the median peak flush
+begin = min(min(flush.time2, na.rm=T), min(dil.time2,na.rm=T))-60*60*12
+#If there's no flush ever
+#begin window 12 hours before the day on which the storm's precip begins
+if (is.na(begin) == T){
+	begin.m = paste(substr(stormdate,6,7))
+	begin.d = paste(substr(stormdate,9,10))
+begin = as.integer(ISOdatetime(year, begin.m, begin.d, 0, 0, 0, tz="UTC"))
+begin = begin - 60*60*12
+}
+#end window 24 hours after median maxiumum dilution
+end = max(max(dil.time2, na.rm=T), max(flush.time2, na.rm=T))+60*60*12
+#If there's no dilution ever
+#end window 48 hours after the peak flush
+if (is.na(end) == T | end == -Inf | end == Inf){
+end = time.of.peak.medians.2013[stormdoy ,2] + 60*60*48
+}
+#For labeling the figure
+stormdate2 = paste(substr(stormdate,6,10), substr(stormdate,1,4), sep="-")
+stormdate2 = paste("Precipitation Event Beginning on", stormdate, sep=" ")
+#Set up Time Series
+setwd(Sensorfolder)
+files = list.files()
+sites = substr(files, 10, 12)
+this.site = subset(files, sites==site1)
+sdata = read.csv(this.site, header=T)
+sdata = sdata[,c(1:3,5:6)]
+setwd(Precipfolder)
+pdata = read.table("Just_what_I_need.txt", header=F, sep=",")
+	#Add column names
+		colnames(pdata) = c("Airport_Code","DateTime_UTC","AirTemp_C","RelHum_Per","WindSpeed_MPH","1HourPrecip_MM")
+	#Next line will result in a warning when "M"s turn to "NA"s --- This is not a problem
+		pdata[,6] = as.numeric(as.character(pdata[,6]))
+pdata[,2] = as.numeric(strptime(pdata[,2], format="%Y-%m-%d %H:%M", tz="UTC"))
+pdata = subset(pdata, pdata[,2]>begin & pdata[,2]<end)
+pdate = as.POSIXct(pdata[,2], origin="1970-01-01", tz="UTC")
+pdate2 = strptime(pdate, format="%Y-%m-%d %H:%M:%S")
+pdiff = pdata[2:(length(pdata[,6])),6] - pdata[1:(length(pdata[,6])-1),6]
+pdiff = c(pdata[1,6], pdiff)
+pdiff = ifelse(pdate2$min==15, pdata[,6], pdiff)
+pdata[,6] = pdiff
+sdata = subset(sdata, sdata[,2]>begin & sdata[,2]<end)
+sdate = as.POSIXct(sdata[,2], origin="1970-01-01", tz="UTC")
+rain = subset(pdata, pdata[,6]>0)
+raindate = as.POSIXct(rain[,2], origin="1970-01-01", tz="UTC")
+precip = as.numeric(as.character(pdata[,6]))
+rh = as.numeric(as.character(pdata[,4]))
+temp = as.numeric(as.character(pdata[,3]))
+for (i in 1:length(precip)){
+precip[i] = ifelse(precip[i]<=0, NA, precip[i])
+}
+##Be sure to switch to the right year from here and below
+r.all = as.numeric(rate.recovery.matrix.2013[stormdoy,])
+r.med = as.numeric(rate.recovery.medians.2013[stormdoy,2])
+r.test = which(abs(r.all-r.med)==min(abs(r.all-r.med), na.rm=T), arr.ind=TRUE)
+r.int = unique(as.numeric(recovery.intercept.matrix.2013[stormdoy,r.test]))
+r.int = median(r.int, na.rm=T)
+p.all= as.numeric(prestorm.slope.matrix.2013[stormdoy,])
+p.med = as.numeric(prestorm.slope.medians.2013[stormdoy,2])
+p.test = which(abs(p.all-p.med)==min(abs(p.all-p.med), na.rm=T), arr.ind=TRUE)
+p.int = unique(as.numeric(prestorm.intercept.matrix.2013[stormdoy,p.test]))
+p.int = median(p.int, na.rm=T)
+#-----
+layout(matrix(c(1,1,1, 2,2,2,2,2,2, 3,3,3), nrow = 4, ncol = 3, byrow = TRUE))
+par(oma=c(1,0,2,0))
+par(mar=c(2,6,1,5))
+hist(flush.time2, xlim=c(begin,end), main="", breaks=seq(begin,end,by=60*60), ylab="", right=TRUE, xaxt="n")
+axis(side=1, at=(sdata[which(substr(sdate,12,16)<="00:04"),2]), labels = substr(sdate[which(substr(sdate,12,16)<="00:04")],1,10))
+legend("topleft", legend=c("A", paste0(freq.data[,2], " / ", freq.data[5])), bty='n')
+par(mar=c(4,6,3,5))
+plot(pdata[,2], precip, type="h", axes=FALSE, bty="n", col="blue", ylim=c(max(rain[,6])*2, min(rain[,6])), xlab="", ylab="")
+axis(side=4)
+mtext("Preciptiation (mm)", side=4, line=3)
+par(new=TRUE)
+plot(sdate, sdata[,4],type="l", xaxt= "n" , xlab="", ylab="", lwd=2, xlim=c(begin,end))
+axis(side=1, at=(sdata[which(substr(sdate,12,16)<="00:04"),2]), labels = substr(sdate[which(substr(sdate,12,16)<="00:04")],1,10))
+mtext(expression(paste("SC (", mu, "S cm"^-1*")")), side=2, line=3)
+mtext(stormdate, side=3, line=0, outer=T)
+legend("topleft", legend="B", bty='n')
+##Recovery
+if(is.na(r.int)==F){
+abline(r.int , rate.recovery.medians.2013[stormdoy,2], col="darkorange", lwd=2)
+}
+##PreStorm Trajectory
+abline(p.int , prestorm.slope.medians.2013[stormdoy,2], col="purple", lwd=2)
+##Troughs
+points(time.of.trough.medians.2013[stormdoy ,2], actual.sc.at.trough.medians.2013[stormdoy ,2], cex=1.5, col="black", bg="red", pch=25)
+##Peaks
+points(time.of.peak.medians.2013[stormdoy ,2], actual.sc.at.peak.medians.2013[stormdoy ,2], cex=1.5, col="black", bg="red", pch=24)
+##Legend
+legend('topright', legend =c("PST",expression(paste("R"[SC]))),col=c("purple", "darkorange"),lwd=c(2,2),bty = 'n')
+legend('bottomleft', legend =c("Peak Flush","Maximum Dilution"),col=c("black", "black"), pt.bg=c("red","red"), pch=c(24, 25), bty='n')
+#-----
+par(mar=c(2,6,1,5))
+hist(dil.time2, xlim=c(begin,end), main="", breaks=seq(begin,end,by=60*60),ylab="",xaxt="n")
+axis(side=1, at=(sdata[which(substr(sdate,12,16)<="00:04"),2]), labels = substr(sdate[which(substr(sdate,12,16)<="00:04")],1,10))
+legend("topleft", legend=c("C", paste0(freq.data[,3], " / ", freq.data[5])), bty='n')
+#-----
+setwd("C:/Users/Dan_Laptop/Desktop/Thesis_Sections/Figures/All_histogram_timeseries")
+dev.off()
+}
+#-----
