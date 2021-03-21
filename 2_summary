@@ -1,10 +1,5 @@
 #-----Packages
 library(Kendall)
-library(zyp)
-library(lattice)
-library(ggplot2)
-library(matrixStats)
-library(leaps)
 
 #---Direct to the folders that hold the precip data and sensor data---
 	Extraction.Save.2013 = ("F:/Thesis/Precipdata/Variable_Parameters/Run.Save/CurrentBestData/CBU2013_Current_Best")
