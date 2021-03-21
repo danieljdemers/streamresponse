@@ -23,7 +23,7 @@ site1 = "CBU"
 		Run.Save = ("/home/djd1013/outputdata")
 #-----Packages
 library(zyp)
-#-----END OF USER INPUTSf
+#-----END OF USER INPUTS
 
 # VARIABLE PARAMETERS BEGIN
 n = iterations*1
