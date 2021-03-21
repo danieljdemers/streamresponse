@@ -22,16 +22,8 @@ site1 = "CBU"
 		Sensorfolder = ("/home/djd1013/inputdata")
 		Run.Save = ("/home/djd1013/outputdata")
 #-----Packages
-library(Kendall)
 library(zyp)
-library(lattice)
-library(ggplot2)
-library(matrixStats)
-library(compiler)
-#-----END OF USER INPUTS
-
-## compile
-entire.code <- function(iterations){
+#-----END OF USER INPUTSf
 
 # VARIABLE PARAMETERS BEGIN
 n = iterations*1
@@ -493,8 +485,5 @@ write.csv(actual.sc.at.trough.matrix, file="actual.sc.at.trough.matrix.csv", row
 write.csv(prestorm.slope.matrix, file="prestorm.slope.matrix.csv", row.names=FALSE)
 write.csv(prestorm.intercept.matrix, file="prestorm.intercept.matrix.csv", row.names=FALSE)
 write.csv(recovery.intercept.matrix, file="recovery.intercept.matrix.csv", row.names=FALSE)
-} #end of function
 #--------------------------------------------------------------------------------
-entire.code.compiled <- cmpfun(entire.code) #compile the code
-entire.code.compiled(10000)
 #--------------------------------------------------------------------------------
